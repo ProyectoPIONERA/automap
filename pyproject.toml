@@ -1,0 +1,27 @@
+[project]
+name = "automap"
+version = "0.1.0"
+description = "Automatic mappings generation proyect"
+authors = [
+    {name = "CarlosGolvano",email = "c.golvano.diaz@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.10.0,<3.11.dev0"
+dependencies = [
+    "rdflib (>=7.2.1,<8.0.0)",
+    "pyyaml (>=6.0.3,<7.0.0)",
+    "yatter (>=2.0.3,<3.0.0)",
+    "pandas (>=2.3.3,<3.0.0)",
+    "lxml (>=6.0.2,<7.0.0)",
+    "torch (==2.5.1)",
+    "accelerate (>=1.11.0,<2.0.0)",
+    "transformers (>=4.57.1,<5.0.0)",
+    "wandb (>=0.23.0,<0.24.0)",
+]
+
+[tool.poetry]
+packages = [{ include = "automap" }]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
