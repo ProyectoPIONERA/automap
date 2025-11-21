@@ -12,6 +12,8 @@ Automatic mapping generation pipeline.
 - [Running Experiments](#running-experiments)
 - Pipeline
   - [Preprocess](#preprocess)
+  - [Converters](#converters)
+  - [RDF Turtle Light](#rdf-turtle-light)
   - [Graph Evaluation](#graph-evaluation)
   - [Postprocess](#postprocess)
 
@@ -146,7 +148,118 @@ The script will create an experiment directory at `datasets/<dataset>/exps/<scen
 
 ## 🔧 Preprocess
 
-blablabla
+Lipsum
+
+## 🔄 Converters
+
+The converters module provides tools to transform between different RDF mapping formats and execute mappings.
+
+### Map2RML - YARRRML to RML Conversion
+
+Converts YARRRML mapping files to RML (Turtle) format using the [YATTER](https://github.com/RMLio/yatter) library.
+
+#### Python API
+
+```python
+from automap.converters import Map2RML
+
+# Initialize converter
+converter = Map2RML()
+
+# Convert YARRRML string to RML
+yarrrml_content = """
+prefixes:
+  ex: http://example.org/
+  
+mappings:
+  person:
+    sources:
+      - ['data.csv~csv']
+    s: ex:$(id)
+    po:
+      - [a, ex:Person]
+      - [ex:name, $(name)]
+"""
+
+rml_mapping = converter(yarrrml_content)
+print(rml_mapping)
+```
+
+#### Command Line
+
+```bash
+# Read YARRRML from stdin, output RML to stdout
+cat mapping.yml | python -m automap.converters.map2rml > mapping.rml.ttl
+```
+
+### RML2Graph - Execute RML Mappings
+
+Executes RML mappings using the [RMLMapper](https://github.com/RMLio/rmlmapper-java) to generate RDF graphs.
+
+#### Command Line
+
+The RMLMapper path can be provided via the `RMLMAPPER_JAR` environment variable or the `--rmlmapper` flag. Use `--ontology` and `--headers` to provide paths that can be referenced in the mapping via RMLMapper parameter placeholders (`@{ontology}` and `@{headers}`).
+
+## 📝 RDF Turtle Light
+
+A module for simplifying OWL/RDFS ontologies into minimal, readable Turtle format optimized for mapping generation.
+
+### Overview
+
+`Onto2LightTTL` reduces full OWL/RDFS ontologies to their essential components by extracting only the information needed for generating RDF mappings:
+
+- Class declarations and hierarchies
+- Object and datatype property declarations
+- Domain and range definitions
+- Labels and comments
+- Excludes complex restrictions and blank nodes
+
+### Features
+
+- **Minimal output**: Removes verbose OWL constructs while preserving semantic structure
+- **Ordered serialization**: Groups classes, object properties, and datatype properties separately
+- **Format support**: Accepts any RDF format supported by RDFLib (Turtle, RDF/XML, N-Triples, etc.)
+- **Clean syntax**: Uses `a` instead of `rdf:type` and `prefix` instead of `@prefix`
+
+### Usage
+
+#### Python API
+
+```python
+from automap.rdf_turtle_light import Onto2LightTTL
+
+# Initialize converter
+converter = Onto2LightTTL(ordered=True)
+
+# Load full ontology
+with open("full_ontology.ttl") as f:
+    ontology = f.read()
+
+# Convert to light Turtle
+light_ttl = converter(ontology, input_format="turtle")
+
+# Save or use the simplified ontology
+with open("minimal_ontology.ttl", "w") as f:
+    f.write(light_ttl)
+```
+
+#### Command Line
+
+```bash
+# Read ontology from stdin, output to stdout
+cat full_ontology.rdf | python -m automap.rdf_turtle_light --format xml
+
+# Save to file
+cat full_ontology.ttl | python -m automap.rdf_turtle_light -o minimal.ttl
+```
+
+#### Example
+
+[...]
+
+### What Gets Filtered Out
+
+[...]
 
 ## 🕸️ Graph Evaluation
 
@@ -235,6 +348,13 @@ ids_by_type:
 ```
 
 ## ⚙️ Postprocess
+
+[...]
+---
+
+### Legacy CLI Tools
+
+The following command-line tools are also available for direct conversion operations:
 
 ### `map2map`
 
