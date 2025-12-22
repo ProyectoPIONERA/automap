@@ -1,130 +1,31 @@
 # AUTOMAP
 
-**Automatic Knowledge Graph Mapping Generation Pipeline**
+Automatic mapping generation pipeline.
 
-AUTOMAP is a comprehensive framework for generating and evaluating mappings automatically. It provides a complete pipeline from data preprocessing to RDF graph generation and evaluation, supporting multiple mapping formats (YARRRML, RML) and featuring advanced evaluation metrics.
+## TODO + IDEAS
 
----
-
-## Project Status
-
-🚧 **Active Development** - This project is actively maintained and under continuous development.
-
-### Roadmap
-- Add mapping reference traceability in evaluation
-- Enhanced preprocessing capabilities
-- Additional LLM-based mapping generation methods
-
----
+- Añadir referencia del mapping en la evaluación. Poder ver la parte del mapping que ha generado las tripletas que han fallado.
+- 
 
 ## Table of Contents
 
-- [Features](#-features)
-- [Repository Structure](#-repository-structure)
-- [Requirements](#-requirements)
-- [Installation](#-installation)
-- [Usage Guide](#-usage-guide)
-  - [Running Experiments](#running-experiments)
+- [Requirements](#requirements)
+- [Running Experiments](#running-experiments)
+- Pipeline
   - [Preprocess](#preprocess)
   - [Converters](#converters)
   - [RDF Turtle Light](#rdf-turtle-light)
   - [Graph Evaluation](#graph-evaluation)
   - [Postprocess](#postprocess)
-- [Acknowledgments](#-acknowledgments)
-- [Authors and Contact](#-authors-and-contact)
-- [License](#-license)
-
----
-
-## Features
-
-AUTOMAP provides a complete toolkit for mapping generation and evaluation:
-
-### Core Capabilities
-- **Automated Mapping Execution**: Execute RML mappings with RMLMapper integration
-- **Ontology Simplification**: Generate minimal, readable Turtle representations from complex OWL/RDFS ontologies
-- **Comprehensive Evaluation**: RDF graph evaluation with detailed metrics for in-depth quality analysis
-- **GPU Acceleration**: Support for transformer models with CUDA
-- **Flexible Pipeline**: Modular architecture for custom workflows
-
-### Pipeline Components
-1. **Preprocessing**: Data preparation and configuration
-2. **Conversion**: YARRRML ↔ RML transformation
-3. **Execution**: RML mapping to RDF graph generation
-4. **Evaluation**: Precision, recall, F1-scores across multiple dimensions
-5. **Postprocessing**: Results analysis and reporting
-
----
-
-## Repository Structure
-
-```
-automap/
-├── automap/                 # Main code package
-│   ├── converters/            # Mapping format converters
-│   ├── grapheval/             # Graph evaluation metrics
-│   │   └── metrics/
-│   ├── methods/               # Mapping generation methods
-│   │   ├── examples/
-│   │   ├── llm_base/
-│   │   └── remap/
-│   ├── postprocess/           # Results postprocessing (not used yet)
-│   ├── preprocess/            # Data preprocessing  (not used yet)
-│   ├── rdf_turtle_light/      # Ontology simplification
-│   └── utils/                 # Utilities (config, auth, printers)
-├── datasets/                # Experiment datasets
-│   ├── <dataset_name>/        # Dataset directory
-│   │   ├── bin/               # Experiment execution scripts
-│   │   ├── data/              # Data organized by scenarios
-│   │   │   ├── <scenario1>/   # Scenario 1: specific ontology
-│   │   │   │   ├── config.yaml           # Evaluation configuration
-│   │   │   │   ├── ontology.ttl          # Target ontology
-│   │   │   │   ├── <case1>/              # Case 1: specific data instance
-│   │   │   │   │   ├── data.*            # Source data (CSV, JSON, XML, etc.)
-│   │   │   │   │   ├── gold_mapping.yml  # Reference mapping (optional)
-│   │   │   │   │   └── gold_graph.nt     # Reference RDF graph
-│   │   │   │   └── <case2>/              # Case 2: different data, same ontology
-│   │   │   │       └── ...
-│   │   │   └── <scenario2>/   # Scenario 2: different ontology
-│   │   │       └── ...
-│   │   └── exps/              # Generated experiment results
-│   ├── blinkg/                # Example: BlinkG benchmark
-│   ├── imbd/                  # Example: IMDB movies dataset
-│   └── PODIO/                 # Example: PODIO dataset
-├── resources/               # External resources
-│   └── rmlmapper-*.jar        # RMLMapper executable
-├── scripts/                 # Installation and job scripts
-├── pyproject.toml           # Poetry dependencies
-├── environment.yml          # Conda environment (PyTorch GPU)
-└── README.md                # This file
-```
-
-### Dataset Organization
-
-Datasets must be placed in the `datasets/` directory following this hierarchical structure:
-
-- **Dataset level**: Top-level directory for a collection of related experiments (e.g., `blinkg`, `imbd`)
-- **Scenario level** (`data/<scenario>/`): Each scenario represents a **different target ontology** with its own:
-  - `ontology.ttl`: The target ontology file
-  - `config.yaml`: Evaluation configuration specific to this ontology
-- **Case level** (`data/<scenario>/<case>/`): Each case within a scenario represents a **different data instance** for the same ontology, containing:
-  - Source data files (CSV, JSON, XML, etc.)
-  - `gold_mapping.yml`: Reference mapping (optional, for mapping evaluation)
-  - `gold_graph.nt`: Reference RDF graph (for graph evaluation)
-
-This structure allows testing the same ontology (scenario) with different data sources (cases), or different ontologies (scenarios) within the same dataset collection.
-
----
 
 ## Requirements
 
 ### System Requirements
 
-- **Python**: 3.10.x (strictly required)
+- **Python**: 3.10.x (strictly)
 - **Conda**: For environment and PyTorch GPU management
 - **Poetry**: 2.2.1+ for Python dependency management
 - **CUDA**: 12.1 (for GPU support)
-- **Java**: JRE 11+ (for RMLMapper)
 
 ### Python Dependencies
 
@@ -161,8 +62,6 @@ transformers = ">=4.57.1,<5.0.0" # Transformer models
   - Download: [RMLMapper v8.0.0](https://github.com/RMLio/rmlmapper-java/releases/download/v8.0.0/rmlmapper-8.0.0-r378-all.jar)
   - Location: Must be placed in `resources/rmlmapper-8.0.0-r378-all.jar`
   - Purpose: Executes RML mappings to generate RDF graphs
-
----
 
 ## Installation
 
@@ -232,45 +131,27 @@ python scripts/test_torch.py
 poetry show
 ```
 
----
-
-## Usage Guide
-
-### Running Experiments
+## 🚀 Running Experiments
 
 Bash scripts are provided to run complete experiments with a single command, automating the entire pipeline from mapping generation to evaluation.
-
-**Dataset Requirements**: Datasets must be placed in the `automap/datasets/` directory following the structure described in [Repository Structure](#repository-structure), with scenarios organized under `data/` subdirectories (e.g., `datasets/<dataset_name>/data/scenario1/`, `datasets/<dataset_name>/data/scenario2/`, etc.).
-
-#### Experiment Template
 
 A template is available at `resources/exp_bin_template.sh`. To use it:
 
 1. Copy the template to your dataset's `bin/` directory
 2. Configure only these variables:
    ```bash
-   # Line 3. Project path.
-   project="$HOME/workspace/automap"
-
-   # Line 39. Dataset path.
-   dataset="$project/datasets/<YOUR_DATASET>"
-
-   # Line 43. Data scenarios to execute, sep by blanks.
-   scenarios="<YOUR_SCENARIOS>"
-
-   # Line 49. Amount of runs.
-   runs="<YOUR_RUNS>"
-
-   # Lines 58 and 59. Method path and method name.
-   method="$python $automap/methods/<YOUR_METHOD_PATH>.py"
-   method_name="<YOUR_METHOD_NAME>"
-
+   scenario="<your_scenario>/<your_subscenario>/<...>"
+   exp="<your_experiment_name>"
    ```
 3. Run the script - everything else is handled automatically
 
 The script will create an experiment directory at `datasets/<dataset>/exps/<scenario>_<experiment_name>/` with the data files linked from `data/`.
 
-### Converters
+## 🔧 Preprocess
+
+Lipsum
+
+## 🔄 Converters
 
 The converters module provides tools to transform between different RDF mapping formats and execute mappings.
 
@@ -312,7 +193,15 @@ print(rml_mapping)
 cat mapping.yml | python -m automap.converters.map2rml > mapping.rml.ttl
 ```
 
-## RDF Turtle Light
+### RML2Graph - Execute RML Mappings
+
+Executes RML mappings using the [RMLMapper](https://github.com/RMLio/rmlmapper-java) to generate RDF graphs.
+
+#### Command Line
+
+The RMLMapper path can be provided via the `RMLMAPPER_JAR` environment variable or the `--rmlmapper` flag. Use `--ontology` and `--headers` to provide paths that can be referenced in the mapping via RMLMapper parameter placeholders (`@{ontology}` and `@{headers}`).
+
+## 📝 RDF Turtle Light
 
 A module for simplifying OWL/RDFS ontologies into minimal, readable Turtle format optimized for mapping generation.
 
@@ -365,7 +254,15 @@ cat full_ontology.rdf | python -m automap.rdf_turtle_light --format xml
 cat full_ontology.ttl | python -m automap.rdf_turtle_light -o minimal.ttl
 ```
 
-## Graph Evaluation
+#### Example
+
+[...]
+
+### What Gets Filtered Out
+
+[...]
+
+## 🕸️ Graph Evaluation
 
 A Python module for evaluating RDF graphs against reference ontologies with comprehensive metrics.
 
@@ -451,48 +348,48 @@ ids_by_type:
     - "nm0000002"
 ```
 
+## ⚙️ Postprocess
+
+[...]
 ---
 
-## Acknowledgments
+### Legacy CLI Tools
 
-This project builds upon and acknowledges the following:
+The following command-line tools are also available for direct conversion operations:
 
-### Funding
+### `map2map`
 
-- **PIONERA Project**: This work is part of the PIONERA initiative
+`map2map` converts mapping files to the RML format. When provided with a
+YARRRML file (``.yml``/``.yaml``) it relies on the
+[YATTER](https://github.com/RMLio/yatter) CLI to do the conversion.  Existing
+RML files are copied to the requested destination.
 
-### Tools and Libraries
+```
+python -m src.map2map path/to/mapping.yml -o path/to/mapping.rml.ttl
+```
 
-- **RMLMapper**: [RMLio/rmlmapper-java](https://github.com/RMLio/rmlmapper-java) - RML mapping execution
-- **YATTER**: [RMLio/yatter](https://github.com/RMLio/yatter) - YARRRML to RML conversion
-- **kg-pipeline**: [Vehnem/kg-pipeline](https://github.com/Vehnem/kg-pipeline) - Original evaluation framework
-- **RDFLib**: Python library for working with RDF
-- **PyTorch**: Deep learning framework
-- **Transformers**: Hugging Face transformers library
+The command prints the location of the generated file to standard output.
+Set the ``YATTER_CMD`` environment variable or pass ``--yatter`` to point to a
+custom executable when ``yatter`` is not on ``PATH``.
 
-### Research
+### `map2graph`
 
-The graph evaluation module is a modified version of the code from:
-> Vehnem et al., "Towards self-configuring Knowledge Graph Construction Pipelines using LLMs - A Case Study with RML", CEUR-WS Vol-3718, 2023
-> [Paper](https://ceur-ws.org/Vol-3718/paper6.pdf)
+`map2graph` executes an RML mapping using the
+[`RMLMapper`](https://github.com/RMLio/rmlmapper-java) CLI.  The path to the
+mapper is read from the ``RMLMAPPER_JAR`` environment variable unless it is
+provided via ``--rmlmapper``.  Use ``--ontology`` and ``--headers`` to provide
+paths that can be consumed in the mapping via RMLMapper parameter placeholders
+(``@{ontology}`` and ``@{headers}``).
 
----
+```
+python -m src.map2graph path/to/mapping.rml.ttl --ontology path/to/ontology.ttl \
+    --headers path/to/headers.csv --rmlmapper /path/to/rmlmapper.jar
+```
 
-## Authors and Contact
+The generated triples are printed to standard output (one line per line in the
+output file) and also written to disk. By default the file is named
+``graph.ttl`` in the current working directory; supply ``--output`` to override
+this behaviour. If the mapping fails or produces no triples the command exits
+with a non-zero status code.
 
-### Main Contributors
 
-- **Carlos Golvano** - Main developer
-  - GitHub: [@CarlosGolvano](https://github.com/CarlosGolvano)
-
-### Contact
-
-For questions, suggestions, or collaboration opportunities:
-- **Issues**: [GitHub Issues](https://github.com/CarlosGolvano/automap/issues)
-- **Email**: carlos.golvano@upm.es
-
----
-
-## License
-
-> **Note**: License information to be added. Please check the repository or contact the authors for current licensing terms.
