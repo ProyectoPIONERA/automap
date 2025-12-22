@@ -495,4 +495,4 @@ For questions, suggestions, or collaboration opportunities:
 
 ## License
 
-> **Note**: License information to be added. Please check the repository or contact the authors for current licensing terms.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
