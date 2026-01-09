@@ -462,7 +462,7 @@ This project builds upon and acknowledges the following:
 - This work has received funding from the PIONERA project (Enhancing interoperability in data spaces through artificial intelligence), a project funded in the context of the call for Technological Products and Services for Data Spaces of the Ministry for Digital Transformation and Public Administration within the framework of the PRTR funded by the European Union (NextGenerationEU)
 
 <div align="center">
-  <img src="Logos financiación.png" alt="Logos financiación" width="900" />
+  <img src="funding_label.png" alt="Logos financiación" width="900" />
 </div>
 
 ### Tools and Libraries
