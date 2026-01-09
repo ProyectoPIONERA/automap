@@ -499,4 +499,4 @@ For questions, suggestions, or collaboration opportunities:
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+AUTOMAP is available under the **[Apache License 2.0](https://github.com/ProyectoPIONERA/automap/blob/main/LICENSE)**.
