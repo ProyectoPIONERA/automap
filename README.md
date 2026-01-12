@@ -19,20 +19,18 @@ AUTOMAP is a comprehensive framework for generating and evaluating mappings auto
 
 ## Table of Contents
 
-- [Features](#-features)
-- [Repository Structure](#-repository-structure)
-- [Requirements](#-requirements)
-- [Installation](#-installation)
-- [Usage Guide](#-usage-guide)
+- [Features](#features)
+- [Repository Structure](#repository-structure)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Usage Guide](#usage-guide)
   - [Running Experiments](#running-experiments)
-  - [Preprocess](#preprocess)
   - [Converters](#converters)
   - [RDF Turtle Light](#rdf-turtle-light)
   - [Graph Evaluation](#graph-evaluation)
-  - [Postprocess](#postprocess)
-- [Acknowledgments](#-acknowledgments)
-- [Authors and Contact](#-authors-and-contact)
-- [License](#-license)
+- [Acknowledgments](#acknowledgments)
+- [Authors and Contact](#authors-and-contact)
+- [License](#license)
 
 ---
 
