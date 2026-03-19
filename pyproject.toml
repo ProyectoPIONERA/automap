@@ -12,11 +12,15 @@ dependencies = [
     "langgraph-api>=0.7.60",
     "langgraph-cli>=0.2.6",
     "morph-kgc>=2.3.1",
-    "pandas>=3.0.1",
+    "pandas>=2.2.0",
+    "plotly>=6.0.0",
     "rdflib>=7.6.0",
+    "streamlit>=1.45.0",
     "yatter>=2.0.3",
 ]
 
+[project.scripts]
+rml-dashboard = "tools.dashboard:main"
 
 [tool.uv.notes]
 morph-kgc-patches = """

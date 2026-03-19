@@ -29,14 +29,17 @@ def build_rml_graph():
         feedback = state.get("feedback", "")
         retries = state.get("retry_count", 0)
         if "SYNTAX_ERROR" in feedback:
-            if retries >= 3:
+            if retries >= 10:
                 return END
             return "generate_yarrrml"
         return "refine_logic"
 
     def logic_check_routing(state):
         feedback = state.get("feedback", "")
+        retries = state.get("retry_count", 0)
         if "LOGIC_ERROR" in feedback:
+            if retries >= 6:
+                return END
             return "generate_yarrrml"
         return "generate_kg"
 
@@ -56,7 +59,7 @@ def build_rml_graph():
     workflow.add_conditional_edges(
         "refine_logic",
         logic_check_routing,
-        {"generate_yarrrml": "generate_yarrrml", "generate_kg": "generate_kg"}
+        {"generate_yarrrml": "generate_yarrrml", "generate_kg": "generate_kg", "__end__": END}
     )
 
     workflow.add_edge("generate_kg", END)

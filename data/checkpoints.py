@@ -17,7 +17,11 @@ class AgentState(TypedDict):
     yarrrml_output: str
     rdf_output: str
 
+    # Run directory for outputs
+    run_dir: str
+
     # Loop & Metadata
     feedback: str
     retry_count: int
     messages: Annotated[List[str], operator.add]
+    predicate_conflict_cols: list          # columns with unresolvable predicate clashes
