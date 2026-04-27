@@ -1,14 +1,8 @@
 from config.settings import get_llm
+from langchain_core.messages import SystemMessage, HumanMessage
 
-
-def call_schema_llm(schema_data: dict):
-    # Use the role-aware factory so this agent can have its own
-    # model/temperature configuration.
-    llm = get_llm(role="schema_agent")
-
-    prompt = f"""Analyze this CSV structure:
-Columns: {schema_data['columns']}
-Sample Data: {schema_data['sample']}
+# ── Static system prompt (cached by llama.cpp across calls) ──
+_SYSTEM_PROMPT = """Analyze a CSV structure.
 
 1. Identify the main entity type this data describes.
 2. For each column, provide a brief description of what it represents
@@ -18,5 +12,18 @@ Sample Data: {schema_data['sample']}
    other entities.
 """
 
-    response = llm.invoke(prompt)
+
+def call_schema_llm(schema_data: dict):
+    llm = get_llm(role="schema_agent")
+
+    human_prompt = f"""Columns: {schema_data['columns']}
+Sample Data: {schema_data['sample']}
+
+Analyze this CSV structure now.
+"""
+
+    response = llm.invoke([
+        SystemMessage(content=_SYSTEM_PROMPT),
+        HumanMessage(content=human_prompt),
+    ])
     return response.content

@@ -7,10 +7,8 @@ load_dotenv()
 
 
 def call_yarrrml_architect_llm(state: dict):
-    retry_count = state.get("retry_count", 0)
-
-    # Use role-specific settings with progressive temperature on retries
-    llm = get_llm(role="yarrrml_architect", retry_count=retry_count)
+    # Use role-specific settings (fixed temperature per role)
+    llm = get_llm(role="yarrrml_architect")
 
     # ── Derive source path dynamically from state ────────────────
     # state["csv_path"] comes from the INPUT_CSV_PATH env variable

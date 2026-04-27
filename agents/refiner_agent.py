@@ -4,10 +4,25 @@ from data.checkpoints import AgentState
 
 
 def _extract_yarrrml_columns(yarrrml_str: str) -> set[str]:
-    """Return all $(column) references found in the YARRRML string."""
+    """Return all column references found in the YARRRML string.
+
+    Scans three patterns:
+      1. $(col)  — standard YARRRML column reference
+      2. {col}   — bare brace template sometimes emitted by LLMs
+                   (also used in composite keys like {first}_{last})
+    Both po: values and subject templates are scanned.
+    """
     if not yarrrml_str:
         return set()
-    return set(re.findall(r'\$\(([^)]+)\)', yarrrml_str))
+    # Pattern 1: $(col)
+    found = set(re.findall(r'\$\(([^)]+)\)', yarrrml_str))
+    # Pattern 2: {col} — split composite keys like {first}_{last}
+    for raw in re.findall(r'\{([^}]+)\}', yarrrml_str):
+        for part in re.split(r'[^a-zA-Z0-9_]', raw):
+            part = part.strip()
+            if part:
+                found.add(part)
+    return found
 
 
 def _parse_yarrrml(yarrrml_str: str):
@@ -20,14 +35,19 @@ def _parse_yarrrml(yarrrml_str: str):
         return None
 
 
+_empty_cols_cache: dict[str, set[str]] = {}
+
+
 def _detect_empty_columns(csv_path: str) -> set[str]:
     """Return the set of CSV columns that are entirely empty/NaN.
 
     Columns with no data cannot be meaningfully mapped to RDF and
-    should not cause column-coverage failures.
+    should not cause column-coverage failures.  Results are cached.
     """
     if not csv_path:
         return set()
+    if csv_path in _empty_cols_cache:
+        return _empty_cols_cache[csv_path]
     try:
         import pandas as pd
         import os
@@ -39,6 +59,7 @@ def _detect_empty_columns(csv_path: str) -> set[str]:
         for col in df.columns:
             if df[col].dropna().astype(str).str.strip().replace("", None).dropna().empty:
                 empty.add(col)
+        _empty_cols_cache[csv_path] = empty
         return empty
     except Exception:
         return set()
@@ -148,6 +169,7 @@ def _auto_fix_missing_prefixes(
     yarrrml_str: str,
     data: dict,
     ontology_info: str = "",
+    entity_plan: str = "",
 ) -> tuple[str, list[str]]:
     """Auto-fix missing prefix declarations in the YARRRML text.
 
@@ -166,6 +188,9 @@ def _auto_fix_missing_prefixes(
     # Ontology prefixes take precedence over well-known defaults
     available: dict[str, str] = dict(_WELL_KNOWN_PREFIXES)
     available.update(_extract_ontology_prefixes(ontology_info))
+    # Also scan entity plan for prefix URIs (catches domain prefixes like lkg:)
+    if entity_plan:
+        available.update(_extract_ontology_prefixes(entity_plan))
 
     fixes: list[str] = []
     additions: list[str] = []
@@ -250,6 +275,8 @@ def _check_islands(mappings: dict) -> list[str]:
     dataset is a valid topology and cannot be "disconnected".
     Self-referential links (e.g. a parent reference within the same
     class) count as valid connectivity.
+    URI-template links (e.g. ``prefix:Class/$(id)/Metadata~iri``)
+    are recognised as valid connectivity.
     """
     errors: list[str] = []
 
@@ -258,21 +285,28 @@ def _check_islands(mappings: dict) -> list[str]:
     if len(valid_mappings) <= 1:
         return errors
 
-    # Build subject-base for every mapping  (strip $(col) and trailing _ /)
+    def _normalise(s: str) -> str:
+        """Strip template vars, ~iri, and normalise slashes."""
+        s = re.sub(r'\$\([^)]+\)', '', s)
+        s = s.replace('~iri', '')
+        s = re.sub(r'/+', '/', s)     # collapse double-slashes
+        return s.rstrip('_/')
+
+    # Build subject-base for every mapping
     subject_bases: dict[str, str] = {}
     for name, mdef in valid_mappings.items():
         subj = str(mdef.get("s", "") or "")
-        base = re.sub(r'\$\([^)]+\)', '', subj).rstrip('_/').replace('~iri', '')
+        base = _normalise(subj)
         if base:
             subject_bases[name] = base
 
-    # Collect every object string **per mapping**.
+    # Collect normalised PO object strings per mapping
     po_objects_by_mapping: dict[str, list[str]] = {}
     for mname, mdef in valid_mappings.items():
         objs: list[str] = []
         for entry in (mdef.get("po") or []):
             if isinstance(entry, list) and len(entry) >= 2:
-                objs.append(str(entry[1]).replace('~iri', ''))
+                objs.append(_normalise(str(entry[1])))
         po_objects_by_mapping[mname] = objs
 
     for name, base in subject_bases.items():
@@ -286,14 +320,11 @@ def _check_islands(mappings: dict) -> list[str]:
                 break
 
         # Does this mapping have outgoing links?
-        # We check for links to OTHER mappings first, then also accept
-        # self-referential links (e.g. a parent FK pointing back to
-        # the same class).
         has_outgoing = False
         for entry in (valid_mappings[name].get("po") or []):
             if not isinstance(entry, list) or len(entry) < 2:
                 continue
-            obj = str(entry[1]).replace('~iri', '')
+            obj = _normalise(str(entry[1]))
             pred = str(entry[0])
             if pred in ("rdf:type", "a"):
                 continue
@@ -303,8 +334,7 @@ def _check_islands(mappings: dict) -> list[str]:
                     has_outgoing = True
                     break
             # Also accept self-referential object-property links
-            # (e.g. an entity linking to its parent within the same class)
-            if not has_outgoing and base and base in obj and '$(' in obj:
+            if not has_outgoing and base and base in obj and obj != base:
                 has_outgoing = True
             if has_outgoing:
                 break
@@ -340,7 +370,7 @@ def _check_duplicate_predicates(mappings: dict) -> tuple[list[str], set[str]]:
     for name, mdef in mappings.items():
         if not isinstance(mdef, dict):
             continue
-        pred_to_cols: dict[str, set[str]] = {}
+        pred_to_cols: dict[str, list[set[str]]] = {}
         for entry in (mdef.get("po") or []):
             if not isinstance(entry, list) or len(entry) < 2:
                 continue
@@ -349,12 +379,22 @@ def _check_duplicate_predicates(mappings: dict) -> tuple[list[str], set[str]]:
                 continue
             cols = set(re.findall(r'\$\(([^)]+)\)', str(entry[1])))
             if cols:
-                pred_to_cols.setdefault(pred, set()).update(cols)
+                pred_to_cols.setdefault(pred, []).append(cols)
 
-        for pred, cols in pred_to_cols.items():
-            if len(cols) > 1:
-                conflicting_cols.update(cols)
-                sorted_cols = sorted(cols)
+        for pred, col_sets in pred_to_cols.items():
+            # Only flag if there are SEPARATE PO entries with the same
+            # predicate.  A single URI template like
+            # ex:Person/$(cc_num)_$(first)_$(last)~iri is ONE entry with
+            # multiple column refs — that is fine and expected.
+            if len(col_sets) <= 1:
+                continue
+            # Multiple separate entries share the same predicate
+            all_cols = set()
+            for cs in col_sets:
+                all_cols.update(cs)
+            if len(all_cols) > 1:
+                conflicting_cols.update(all_cols)
+                sorted_cols = sorted(all_cols)
                 # Build concrete alternative-predicate suggestions
                 prefix = pred.split(":")[0] if ":" in pred else "ex"
                 suggestions = []
@@ -401,21 +441,35 @@ def _auto_fix_duplicate_predicates(
         if not isinstance(mdef, dict):
             continue
 
-        # Build predicate → list of columns (preserving PO order)
-        pred_to_cols: dict[str, list[str]] = {}
-        for entry in (mdef.get("po") or []):
+        # Build predicate → list of (entry_index, columns_in_entry)
+        # We only consider entries as duplicates when SEPARATE PO entries
+        # share the same predicate, not when a single URI template
+        # contains multiple $(col) references.
+        pred_to_entries: dict[str, list[tuple[int, set[str]]]] = {}
+        for idx, entry in enumerate(mdef.get("po") or []):
             if not isinstance(entry, list) or len(entry) < 2:
                 continue
             pred = str(entry[0])
             if pred in ("rdf:type", "a"):
                 continue
-            for col in re.findall(r'\$\(([^)]+)\)', str(entry[1])):
-                pred_to_cols.setdefault(pred, []).append(col)
+            cols = set(re.findall(r'\$\(([^)]+)\)', str(entry[1])))
+            if cols:
+                pred_to_entries.setdefault(pred, []).append((idx, cols))
 
         # Collect all predicates already in use (to avoid naming collisions)
-        all_preds_in_use = set(pred_to_cols.keys())
+        all_preds_in_use = set(pred_to_entries.keys())
 
-        for pred, cols in pred_to_cols.items():
+        for pred, entries in pred_to_entries.items():
+            # Only fix if there are SEPARATE PO entries with the same predicate
+            if len(entries) <= 1:
+                continue
+
+            # Flatten to individual columns for renaming
+            cols = []
+            for _, col_set in entries:
+                cols.extend(sorted(col_set))
+            cols = list(dict.fromkeys(cols))  # dedupe preserving order
+
             if len(cols) <= 1:
                 continue
 
@@ -463,32 +517,62 @@ def _auto_fix_duplicate_predicates(
 
 
 def _check_redundancy(mappings: dict) -> list[str]:
-    """Detect data columns that appear in PO lists of multiple mappings."""
-    col_to_mappings: dict[str, set[str]] = {}
+    """Detect data columns that appear in PO lists of multiple mappings
+    WITH THE SAME PREDICATE AND THE SAME rdf:type CLASS.
+
+    Same predicate+column across mappings with DIFFERENT classes is valid
+    (e.g. ``schema:streetAddress`` in both a Person and a PostalAddress).
+    Only flag when mappings share the same class — that indicates true
+    duplication.
+    """
+    # First, extract the rdf:type class for each mapping
+    mapping_classes: dict[str, str] = {}
+    for name, mdef in mappings.items():
+        if not isinstance(mdef, dict):
+            continue
+        for entry in (mdef.get("po") or []):
+            if isinstance(entry, list) and len(entry) >= 2:
+                if str(entry[0]) in ("a", "rdf:type"):
+                    mapping_classes[name] = str(entry[1])
+                    break
+
+    # Track (predicate, column) → set of mapping names
+    pred_col_to_mappings: dict[tuple[str, str], set[str]] = {}
     for name, mdef in mappings.items():
         if not isinstance(mdef, dict):
             continue
         for entry in (mdef.get("po") or []):
             if not isinstance(entry, list):
                 continue
-            # Only flag 3-item entries (data properties).
-            # 2-item entries are object-property links — the $(col) in
-            # those is used as an identifier, not as duplicated data.
             if len(entry) >= 3:
+                pred = str(entry[0])
+                if pred in ("rdf:type", "a"):
+                    continue
                 for col in re.findall(r'\$\(([^)]+)\)', str(entry[1])):
-                    col_to_mappings.setdefault(col, set()).add(name)
+                    pred_col_to_mappings.setdefault((pred, col), set()).add(name)
 
-    redundant = {c: m for c, m in col_to_mappings.items() if len(m) > 1}
+    # Only flag as redundant if the mappings sharing a predicate+column
+    # also share the same rdf:type class
+    redundant = {}
+    for (pred, col), mnames in pred_col_to_mappings.items():
+        if len(mnames) <= 1:
+            continue
+        # Group by class
+        classes = {mapping_classes.get(m, f"unknown_{m}") for m in mnames}
+        if len(classes) == 1:
+            # Same class in multiple mappings — true redundancy
+            redundant[(pred, col)] = mnames
+        # Different classes → NOT redundant, skip
+
     if not redundant:
         return []
 
-    items = [f"$({c}) in [{', '.join(sorted(m))}]"
-             for c, m in sorted(redundant.items())]
+    items = [f"[{pred},$({col})] in [{', '.join(sorted(m))}]"
+             for (pred, col), m in sorted(redundant.items())]
     return [
-        f"REDUNDANT COLUMNS — these data columns appear in MULTIPLE "
-        f"mappings: {'; '.join(items)}.  Each data column must appear "
-        f"in EXACTLY ONE mapping.  The primary class should link to "
-        f"secondary classes via object properties, NOT duplicate their data."
+        f"REDUNDANT — same predicate+column pair appears in MULTIPLE "
+        f"mappings: {'; '.join(items)}.  If the same column appears in "
+        f"multiple mappings, it MUST use a DIFFERENT predicate in each."
     ]
 
 
@@ -497,23 +581,22 @@ def _auto_fix_redundancy(
     data: dict,
     mappings: dict,
 ) -> tuple[str, list[str]]:
-    """Deterministically remove duplicated data columns across mappings.
+    """Deterministically remove duplicated (same predicate + same column)
+    data properties across mappings.
 
     Strategy
     --------
-    - Compute duplicated columns from 3-item PO entries.
-    - Keep each duplicated column in a single "primary" mapping.
-      Primary mapping = one with most 3-item data properties.
-    - Remove duplicate data-property lines from other mappings.
-
-    This avoids architect retry loops where the model keeps creating
-    overlapping secondary mappings (e.g. stop + station duplicates).
+    - Find 3-item PO entries where the SAME predicate AND SAME column
+      appear in multiple mappings (true redundancy).
+    - Columns with DIFFERENT predicates across mappings are NOT redundant
+      (e.g. date → terms:created in Primary, eli:version_date in Metadata).
+    - Keep the entry in the "primary" mapping (most data properties).
     """
     if not mappings:
         return yarrrml_str, []
 
-    # Build column -> mappings map from 3-item PO entries only.
-    col_to_mappings: dict[str, set[str]] = {}
+    # Build (predicate, column) -> mappings map from 3-item PO entries.
+    pred_col_to_mappings: dict[tuple[str, str], set[str]] = {}
     data_prop_counts: dict[str, int] = {}
     for mname, mdef in mappings.items():
         if not isinstance(mdef, dict):
@@ -522,12 +605,36 @@ def _auto_fix_redundancy(
         for entry in (mdef.get("po") or []):
             if not isinstance(entry, list) or len(entry) < 3:
                 continue
+            pred = str(entry[0])
+            if pred in ("rdf:type", "a"):
+                continue
             count += 1
             for col in re.findall(r'\$\(([^)]+)\)', str(entry[1])):
-                col_to_mappings.setdefault(col, set()).add(mname)
+                pred_col_to_mappings.setdefault((pred, col), set()).add(mname)
         data_prop_counts[mname] = count
 
-    redundant = {c: ms for c, ms in col_to_mappings.items() if len(ms) > 1}
+    redundant_raw = {k: ms for k, ms in pred_col_to_mappings.items() if len(ms) > 1}
+    if not redundant_raw:
+        return yarrrml_str, []
+
+    # Extract rdf:type class for each mapping
+    mapping_classes: dict[str, str] = {}
+    for mname, mdef in mappings.items():
+        if not isinstance(mdef, dict):
+            continue
+        for entry in (mdef.get("po") or []):
+            if isinstance(entry, list) and len(entry) >= 2:
+                if str(entry[0]) in ("a", "rdf:type"):
+                    mapping_classes[mname] = str(entry[1])
+                    break
+
+    # Only treat as redundant if mappings share the same class
+    redundant = {}
+    for (pred, col), mnames in redundant_raw.items():
+        classes = {mapping_classes.get(m, f"unknown_{m}") for m in mnames}
+        if len(classes) == 1:
+            redundant[(pred, col)] = mnames
+
     if not redundant:
         return yarrrml_str, []
 
@@ -537,11 +644,49 @@ def _auto_fix_redundancy(
         key=lambda kv: (-kv[1], kv[0])
     )[0][0] if data_prop_counts else sorted(mappings.keys())[0]
 
+    # Build a set of "semantically owns" hints: if a mapping's class name
+    # appears in the predicate prefix (e.g. PersonMapping → schema:givenName
+    # belongs to the Person), prefer keeping it there.
+    mapping_class_hints: dict[str, str] = {}
+    for mname, mdef in mappings.items():
+        if not isinstance(mdef, dict):
+            continue
+        for entry in (mdef.get("po") or []):
+            if isinstance(entry, list) and len(entry) >= 2:
+                if str(entry[0]) in ("a", "rdf:type"):
+                    # e.g. "schema:Person" → "person"
+                    cls = str(entry[1]).rsplit(":", 1)[-1].rsplit("/", 1)[-1].lower()
+                    mapping_class_hints[mname] = cls
+
     fixes: list[str] = []
     changed = False
 
-    for col, mnames in sorted(redundant.items()):
-        keep_mapping = primary if primary in mnames else sorted(mnames)[0]
+    for (pred, col), mnames in sorted(redundant.items()):
+        # Determine which mapping should KEEP the property:
+        # 1. If the predicate "belongs" to a mapping's class (heuristic),
+        #    keep it there.
+        # 2. Otherwise fall back to the NON-primary mapping (secondary
+        #    mappings are more semantically specific).
+        # 3. Last resort: primary.
+        keep_mapping = None
+
+        # Heuristic: check if predicate local name suggests ownership
+        pred_local = pred.rsplit(":", 1)[-1].lower() if ":" in pred else pred.lower()
+        for mname in sorted(mnames):
+            cls_hint = mapping_class_hints.get(mname, "")
+            # e.g. PersonMapping has class "person", predicate "givenName"
+            # → schema predicates belong with Person, not Transaction
+            if cls_hint and cls_hint != "":
+                # If mapping name contains the class hint, it's a match
+                mname_lower = mname.lower()
+                if cls_hint in mname_lower and mname != primary:
+                    keep_mapping = mname
+                    break
+
+        # If no semantic match, keep in the NON-primary (more specific) mapping
+        if keep_mapping is None:
+            non_primary = sorted(m for m in mnames if m != primary)
+            keep_mapping = non_primary[0] if non_primary else primary
         for mname in sorted(mnames):
             if mname == keep_mapping:
                 continue
@@ -555,6 +700,7 @@ def _auto_fix_redundancy(
                 if (
                     isinstance(entry, list)
                     and len(entry) >= 3
+                    and str(entry[0]) == pred
                     and f"$({col})" in str(entry[1])
                 ):
                     removed_here = True
@@ -564,7 +710,7 @@ def _auto_fix_redundancy(
             if removed_here:
                 mdef["po"] = new_po
                 fixes.append(
-                    f"Removed duplicated $({col}) from '{mname}' "
+                    f"Removed duplicated [{pred},$({col})] from '{mname}' "
                     f"(kept in '{keep_mapping}')"
                 )
 
@@ -598,41 +744,62 @@ def _build_column_assignment_hint(
     mappings: dict,
 ) -> str:
     """Build a concrete column-assignment recipe that tells the architect
-    exactly which columns currently live where, which are duplicated, and
-    which are missing.  This removes ambiguity for the LLM.
+    exactly which columns currently live where and which are missing.
+
+    Scans po: values, subject templates, and {col} concat patterns so
+    that columns used only as URI key parts (e.g. city_pop in the subject
+    template) are NOT incorrectly shown as missing.
     """
     if not mappings or not csv_columns:
         return ""
 
     lines: list[str] = ["CURRENT COLUMN DISTRIBUTION (for reference):\n"]
 
-    # Where each column currently appears (ALL PO entries — both
-    # 3-item data properties and 2-item object-property links).
     col_to_mappings: dict[str, list[str]] = {}
+
+    def _register(col: str, mapping_name: str) -> None:
+        col_to_mappings.setdefault(col, []).append(mapping_name)
+
     for name, mdef in mappings.items():
         if not isinstance(mdef, dict):
             continue
+
+        # ── Subject template ──────────────────────────────────────
+        subj = str(mdef.get("s", ""))
+        for col in re.findall(r'\$\(([^)]+)\)', subj):
+            _register(col, name)
+        for raw in re.findall(r'\{([^}]+)\}', subj):
+            for part in re.split(r'[^a-zA-Z0-9_]', raw):
+                part = part.strip()
+                if part and part in csv_columns:
+                    _register(part, name)
+
+        # ── PO entries ────────────────────────────────────────────
         for entry in (mdef.get("po") or []):
-            if isinstance(entry, list) and len(entry) >= 2:
-                for col in re.findall(r'\$\(([^)]+)\)', str(entry[1])):
-                    col_to_mappings.setdefault(col, []).append(name)
+            if not isinstance(entry, list) or len(entry) < 2:
+                continue
+            val = str(entry[1])
+            for col in re.findall(r'\$\(([^)]+)\)', val):
+                _register(col, name)
+            for raw in re.findall(r'\{([^}]+)\}', val):
+                for part in re.split(r'[^a-zA-Z0-9_]', raw):
+                    part = part.strip()
+                    if part and part in csv_columns:
+                        _register(part, name)
+
+    # De-dup per mapping
+    col_to_mappings = {c: list(dict.fromkeys(ms)) for c, ms in col_to_mappings.items()}
 
     # Show current state per mapping
     mapping_to_cols: dict[str, list[str]] = {}
     for col, mnames in col_to_mappings.items():
         for m in mnames:
             mapping_to_cols.setdefault(m, []).append(col)
+    mapping_to_cols = {m: sorted(set(cs)) for m, cs in mapping_to_cols.items()}
 
     for mname in sorted(mappings.keys()):
-        cols = sorted(mapping_to_cols.get(mname, []))
+        cols = mapping_to_cols.get(mname, [])
         lines.append(f"  {mname}: {cols if cols else '(no data columns)'}")
-
-    # Highlight duplicates
-    duplicated = {c: ms for c, ms in col_to_mappings.items() if len(ms) > 1}
-    if duplicated:
-        lines.append("\n  [WARN] DUPLICATED (must appear in only ONE mapping):")
-        for col, ms in sorted(duplicated.items()):
-            lines.append(f"    $({col}) → currently in [{', '.join(ms)}]")
 
     # Highlight missing
     mapped_cols = set(col_to_mappings.keys())
@@ -641,7 +808,6 @@ def _build_column_assignment_hint(
         lines.append(f"\n  [WARN] MISSING COLUMNS (must be added): {missing}")
 
     # Identifier column hint
-    # Find the column used in most subject templates
     subj_cols: dict[str, int] = {}
     for mdef in mappings.values():
         if not isinstance(mdef, dict):
@@ -657,6 +823,422 @@ def _build_column_assignment_hint(
 
     lines.append("")
     return "\n".join(lines) + "\n"
+
+
+def _auto_fix_metadata_class(
+    yarrrml_str: str,
+    data: dict,
+    mappings: dict,
+) -> tuple[str, list[str]]:
+    """Deterministically fix Metadata mappings that use the same rdf:type as
+    the primary mapping.
+
+    Renames the class to ``{PrimaryClass}Metadata`` so that downstream tools
+    do not confuse the metadata resource with the main entity.
+
+    Returns (fixed_yarrrml, list_of_fix_descriptions).
+    """
+    if not mappings:
+        return yarrrml_str, []
+
+    # Detect primary class
+    primary_class: str | None = None
+    max_po = 0
+    for mname, mdef in mappings.items():
+        if not isinstance(mdef, dict) or "metadata" in mname.lower():
+            continue
+        po = mdef.get("po") or []
+        if len(po) > max_po:
+            for entry in po:
+                if isinstance(entry, list) and str(entry[0]) in ("a", "rdf:type"):
+                    primary_class = str(entry[1])
+                    max_po = len(po)
+                    break
+
+    if not primary_class:
+        return yarrrml_str, []
+
+    fixes: list[str] = []
+    changed = False
+    for mname, mdef in mappings.items():
+        if not isinstance(mdef, dict) or "metadata" not in mname.lower():
+            continue
+        po = mdef.get("po") or []
+        for idx, entry in enumerate(po):
+            if isinstance(entry, list) and str(entry[0]) in ("a", "rdf:type"):
+                if str(entry[1]) == primary_class:
+                    suggested = primary_class.rstrip(">").rstrip("/") + "Metadata"
+                    po[idx] = [entry[0], suggested]
+                    changed = True
+                    fixes.append(
+                        f"Auto-fixed metadata class in '{mname}': "
+                        f"'{primary_class}' → '{suggested}'"
+                    )
+
+    if not changed:
+        return yarrrml_str, []
+
+    try:
+        from io import StringIO
+        from ruamel.yaml import YAML
+        _yaml = YAML()
+        _yaml.default_flow_style = False
+        _yaml.preserve_quotes = True
+        _yaml.indent(mapping=2, sequence=4, offset=2)
+        buf = StringIO()
+        _yaml.dump(data, buf)
+        return buf.getvalue().strip(), fixes
+    except Exception:
+        return yarrrml_str, []
+
+
+def _auto_fix_intra_mapping_duplicates(
+    yarrrml_str: str,
+    data: dict,
+    mappings: dict,
+) -> tuple[str, list[str]]:
+    """Remove exact duplicate PO entries within the same mapping.
+
+    A duplicate is a PO entry whose (predicate, object-value) pair
+    appears more than once inside the same mapping's ``po:`` list.
+    Only exact string-level duplicates are removed; entries that share
+    a predicate but have different object values are kept.
+
+    Returns
+    -------
+    (fixed_yarrrml, list_of_fix_descriptions)
+    """
+    if not mappings:
+        return yarrrml_str, []
+
+    fixes: list[str] = []
+    changed = False
+
+    for mname, mdef in mappings.items():
+        if not isinstance(mdef, dict):
+            continue
+        po = mdef.get("po") or []
+        seen: set[str] = set()
+        new_po: list = []
+        for entry in po:
+            key = repr(entry)
+            if key in seen:
+                fixes.append(
+                    f"Removed duplicate PO entry {entry!r} from '{mname}'"
+                )
+                changed = True
+            else:
+                seen.add(key)
+                new_po.append(entry)
+        if len(new_po) < len(po):
+            mdef["po"] = new_po
+
+    if not changed:
+        return yarrrml_str, []
+
+    try:
+        from io import StringIO
+        from ruamel.yaml import YAML
+        yaml = YAML()
+        yaml.default_flow_style = False
+        yaml.preserve_quotes = True
+        yaml.indent(mapping=2, sequence=4, offset=2)
+        buf = StringIO()
+        yaml.dump(data, buf)
+        return buf.getvalue().strip(), fixes
+    except Exception:
+        return yarrrml_str, []
+
+
+def _check_class_validity(mappings: dict, ontology_raw: str) -> list[str]:
+    """Flag rdf:type values not present in the ontology.
+
+    Extracts class URIs from the ontology text (both Turtle @prefix style
+    and raw URIs) and checks that every rdf:type in the mappings matches.
+    """
+    if not ontology_raw or not mappings:
+        return []
+
+    # Extract all class-like URIs from ontology
+    # Match full URIs and prefixed names after owl:Class, rdfs:Class, rdf:type
+    ontology_classes: set[str] = set()
+    # Full URIs
+    for m in re.finditer(r'<([^>]+)>\s+(?:a|rdf:type)\s+(?:owl:Class|rdfs:Class)', ontology_raw):
+        ontology_classes.add(m.group(1))
+    # Also extract from @prefix definitions + any URI that looks like a class
+    for m in re.finditer(r'<([^>]+(?:#|/)[A-Z][^>]*)>', ontology_raw):
+        ontology_classes.add(m.group(1))
+    # Prefixed names used as classes
+    for m in re.finditer(r'(\w+:[A-Z]\w*)', ontology_raw):
+        ontology_classes.add(m.group(1))
+
+    if not ontology_classes:
+        return []  # Can't validate without ontology classes
+
+    # Detect primary class (from mapping with most po entries)
+    primary_class = None
+    max_po = 0
+    for mname, mdef in mappings.items():
+        if not isinstance(mdef, dict):
+            continue
+        po_count = len(mdef.get("po") or [])
+        if po_count > max_po:
+            max_po = po_count
+            for entry in (mdef.get("po") or []):
+                if isinstance(entry, list) and len(entry) >= 2:
+                    if str(entry[0]) in ("a", "rdf:type"):
+                        primary_class = str(entry[1])
+                        break
+
+    errors: list[str] = []
+    for mname, mdef in mappings.items():
+        if not isinstance(mdef, dict):
+            continue
+        for entry in (mdef.get("po") or []):
+            if isinstance(entry, list) and len(entry) >= 2:
+                if str(entry[0]) in ("a", "rdf:type"):
+                    cls = str(entry[1])
+
+                    # Special check: metadata mapping must NOT use primary class
+                    if "metadata" in mname.lower() and primary_class and cls == primary_class:
+                        # Suggest {PrimaryClass}Metadata
+                        suggested = cls.rstrip(">").rstrip("/") + "Metadata"
+                        errors.append(
+                            f"CLASS WARNING: Metadata mapping '{mname}' uses the same "
+                            f"class '{cls}' as the primary entity — auto-fix: changing to "
+                            f"'[a, {suggested}]'."
+                        )
+                    elif cls not in ontology_classes:
+                        # Check both full URI and prefixed form
+                        found = any(cls.split(":")[-1] in oc for oc in ontology_classes)
+                        if not found:
+                            # Don't block on Metadata suffix classes — they're expected
+                            if "Metadata" in cls:
+                                continue
+                            errors.append(
+                                f"CLASS WARNING: '{cls}' in mapping '{mname}' "
+                                f"may not exist in the ontology. Verify it matches "
+                                f"an actual class from the ontology."
+                            )
+    return errors
+
+
+# ────────────────────────────────────────────────────────────────────
+# Auto-inject missing columns (deterministic, fully agnostic)
+# ────────────────────────────────────────────────────────────────────
+
+def _auto_inject_missing_columns(
+    yarrrml_str: str,
+    data: dict,
+    mappings: dict,
+    missing_cols: list[str],
+) -> tuple[str, list[str], list[str]]:
+    """Deterministically inject missing CSV columns into the best-fit mapping
+    using direct text insertion (no ruamel.yaml re-serialisation).
+
+    Inference is fully agnostic — derived from universal column-name
+    conventions only; no dataset-specific hardcoding.
+
+    Returns
+    -------
+    (fixed_yarrrml, still_missing_cols, fix_descriptions)
+        ``still_missing_cols`` contains columns that could not be injected
+        (e.g. no matching po: block found in the text).
+    """
+    if not missing_cols or not mappings:
+        return yarrrml_str, list(missing_cols), []
+
+    # ── Find primary mapping (most data-property entries) ──────────
+    primary = sorted(
+        mappings.keys(),
+        key=lambda m: -len([
+            e for e in (mappings[m].get("po") or [])
+            if isinstance(e, list) and len(e) >= 3
+        ])
+    )[0]
+
+    fixes: list[str] = []
+    still_missing: list[str] = []
+    lines = yarrrml_str.split("\n")
+
+    for col in missing_cols:
+        col_lower = col.lower().strip()
+
+        # ── Datatype + predicate from universal naming conventions ──
+        if re.search(r'(lat|latitude)$', col_lower):
+            pred, dtype = "geo:lat", "xsd:decimal"
+        elif re.search(r'(lon|long|longitude)$', col_lower):
+            pred, dtype = "geo:long", "xsd:decimal"
+        elif re.search(r'(date|time|datetime|timestamp)$', col_lower):
+            pred, dtype = f"ex:{_to_camel_case(col)}", "xsd:string"
+        elif re.search(r'(amt|amount|price|cost|fee|salary|revenue|total|balance)$', col_lower):
+            pred, dtype = f"ex:{_to_camel_case(col)}", "xsd:decimal"
+        elif re.search(r'(pop|population|count|num|age|year|qty|quantity|rank|score)$', col_lower):
+            pred, dtype = f"ex:{_to_camel_case(col)}", "xsd:integer"
+        elif re.search(r'^(is_|has_)|(_flag|_bool)$', col_lower):
+            pred, dtype = f"ex:{_to_camel_case(col)}", "xsd:boolean"
+        else:
+            pred, dtype = f"ex:{_to_camel_case(col)}", "xsd:string"
+
+        # ── Best-fit mapping by name-prefix similarity ──────────────
+        target = primary
+        best_score = 0
+        col_prefix = col_lower[:5]
+        for mname in mappings:
+            score = 0
+            m_lower = mname.lower()
+            if col_prefix in m_lower:
+                score += 5
+            score += sum(1 for c in col_lower if c in m_lower)
+            if score > best_score:
+                best_score = score
+                target = mname
+
+        # ── Text-level injection after last po: entry of target ────
+        new_entry = f"      - [{pred}, $({col}), {dtype}]"
+        in_target = False
+        last_po_idx = -1
+
+        for i, line in enumerate(lines):
+            # Detect start of the target mapping block (2-space indent)
+            if re.match(rf'^ {{2}}{re.escape(target)}\s*:', line):
+                in_target = True
+            if in_target:
+                # Track the last inline po list entry line
+                if re.match(r'^ {6}-\s+\[', line):
+                    last_po_idx = i
+                # Stop when we hit the next sibling mapping definition
+                elif i > 0 and re.match(r'^ {2}\w', line) and not re.match(
+                        rf'^ {{2}}{re.escape(target)}\s*:', line):
+                    break
+
+        if last_po_idx > 0:
+            lines.insert(last_po_idx + 1, new_entry)
+            fixes.append(f"'{col}' → [{pred}, {dtype}] in {target}")
+        else:
+            still_missing.append(col)
+
+    return "\n".join(lines), still_missing, fixes
+
+
+def _auto_fix_islands(
+    yarrrml_str: str,
+    data: dict,
+    mappings: dict,
+) -> tuple[str, list[str]]:
+    """Deterministically wire disconnected (island) mappings to the primary.
+
+    For each island mapping:
+    1. Derives a predicate from the mapping name:
+       ``DiagnosisMapping`` → ``ex:hasDiagnosis``
+    2. Injects that 2-item IRI link into the primary mapping's po: block.
+    3. Ensures ``ex:`` prefix is declared (``_auto_fix_missing_prefixes``
+       handles this downstream if not).
+
+    This is fully agnostic — predicate derivation uses only the mapping
+    name string, not any domain knowledge.
+
+    Returns (fixed_yarrrml, list_of_fix_descriptions).
+    """
+    if not mappings or len(mappings) <= 1:
+        return yarrrml_str, []
+
+    # Identify islands using the same logic as _check_islands
+    def _normalise(s: str) -> str:
+        s = re.sub(r'\$\([^)]+\)', '', s)
+        s = s.replace('~iri', '')
+        s = re.sub(r'/+', '/', s)
+        return s.rstrip('_/')
+
+    subject_bases: dict[str, str] = {}
+    for name, mdef in mappings.items():
+        if isinstance(mdef, dict):
+            subj = str(mdef.get("s", "") or "")
+            base = _normalise(subj)
+            if base:
+                subject_bases[name] = base
+
+    po_objects_by_mapping: dict[str, list[str]] = {}
+    for mname, mdef in mappings.items():
+        if isinstance(mdef, dict):
+            po_objects_by_mapping[mname] = [
+                _normalise(str(e[1]))
+                for e in (mdef.get("po") or [])
+                if isinstance(e, list) and len(e) >= 2
+            ]
+
+    islands: list[str] = []
+    for name, base in subject_bases.items():
+        referenced = any(
+            base in obj
+            for other, objs in po_objects_by_mapping.items()
+            if other != name
+            for obj in objs
+        )
+        has_outgoing = any(
+            other_base and other_base in _normalise(str(e[1]))
+            for e in (mappings[name].get("po") or [])
+            if isinstance(e, list) and len(e) >= 2 and str(e[0]) not in ("a", "rdf:type")
+            for other, other_base in subject_bases.items()
+            if other != name
+        )
+        if not referenced and not has_outgoing:
+            islands.append(name)
+
+    if not islands:
+        return yarrrml_str, []
+
+    # Primary mapping = most data-property po entries
+    data_prop_counts = {
+        n: sum(1 for e in (m.get("po") or [])
+               if isinstance(e, list) and len(e) >= 3 and str(e[0]) not in ("a", "rdf:type"))
+        for n, m in mappings.items()
+        if isinstance(m, dict)
+    }
+    primary = sorted(data_prop_counts, key=lambda k: -data_prop_counts[k])[0]
+
+    fixes: list[str] = []
+    lines = yarrrml_str.split("\n")
+
+    for island_name in islands:
+        if island_name == primary:
+            continue
+
+        # Derive predicate: strip Mapping/Metadata suffix, prepend ex:has
+        clean = re.sub(r'(Mapping|Metadata)$', '', island_name)
+        pred = f"ex:has{clean}"
+
+        # Build the subject URI template for the island mapping
+        island_subj = str(mappings[island_name].get("s", "")) if isinstance(mappings[island_name], dict) else ""
+        if not island_subj:
+            continue
+        link_value = f"{island_subj}~iri"
+
+        new_entry = f"      - [{pred}, {link_value}]"
+
+        # Find the last po entry line in the primary mapping
+        in_primary = False
+        last_po_idx = -1
+        for i, line in enumerate(lines):
+            if re.match(rf'^ {{2}}{re.escape(primary)}\s*:', line):
+                in_primary = True
+            if in_primary:
+                if re.match(r'^ {6}-\s+\[', line):
+                    last_po_idx = i
+                elif i > 0 and re.match(r'^ {2}\w', line) and not re.match(
+                        rf'^ {{2}}{re.escape(primary)}\s*:', line):
+                    break
+
+        if last_po_idx > 0:
+            lines.insert(last_po_idx + 1, new_entry)
+            fixes.append(
+                f"Auto-wired island '{island_name}' → [{pred}, {link_value}] in '{primary}'"
+            )
+
+    if not fixes:
+        return yarrrml_str, []
+
+    return "\n".join(lines), fixes
 
 
 # ────────────────────────────────────────────────────────────────────
@@ -699,8 +1281,9 @@ def call_refiner_llm(state: AgentState) -> dict:
 
         # ── Auto-fix missing prefixes before other checks ─────────
         ontology_raw = state.get("ontology_info", {}).get("raw", "")
+        entity_plan_text = state.get("schema_alignment", {}).get("entity_plan", "")
         prefix_fixed, prefix_fixes = _auto_fix_missing_prefixes(
-            yarrrml, data, ontology_raw
+            yarrrml, data, ontology_raw, entity_plan_text
         )
         if prefix_fixes:
             fixed_data = _parse_yarrrml(prefix_fixed)
@@ -713,8 +1296,17 @@ def call_refiner_llm(state: AgentState) -> dict:
                     mappings = data["mappings"]
 
         # Check for remaining undeclared prefixes (ones we couldn't fix)
-        prefix_errors, _ = _check_prefix_completeness(data)
-        all_errors.extend(prefix_errors)
+        # This is already computed inside _auto_fix_missing_prefixes —
+        # only re-check if there were unfixable prefixes
+        declared = set(data.get("prefixes", {}).keys()) if data.get("prefixes") else set()
+        used = _extract_used_prefixes(data)
+        still_missing = used - declared - _IMPLICIT_PREFIXES
+        if still_missing:
+            all_errors.append(
+                f"PREFIX COMPLETENESS -- these prefixes are used but NOT declared "
+                f"in the `prefixes:` section: [{', '.join(sorted(still_missing))}]. "
+                f"Add them to the `prefixes:` block with their full URI."
+            )
 
         # ── Strip unused prefixes (reduces noise for Phase 2 LLM) ──
         cleaned, removed = _strip_unused_prefixes(yarrrml, data)
@@ -727,7 +1319,32 @@ def call_refiner_llm(state: AgentState) -> dict:
                 if isinstance(data.get("mappings"), dict):
                     mappings = data["mappings"]
 
-        all_errors.extend(_check_islands(mappings))
+        # ── Check class validity against ontology ─────────────
+        ontology_raw = state.get("ontology_info", {}).get("raw", "")
+        class_errors = _check_class_validity(mappings, ontology_raw)
+
+        # ── Auto-fix metadata class before reporting ───────────
+        if any("metadata" in e.lower() and "auto-fix" in e.lower() for e in class_errors):
+            fixed_yarrrml, meta_fixes = _auto_fix_metadata_class(yarrrml, data, mappings)
+            if meta_fixes:
+                fixed_data = _parse_yarrrml(fixed_yarrrml)
+                if fixed_data and isinstance(fixed_data.get("mappings"), dict):
+                    for fix in meta_fixes:
+                        print(f"    [FIX] Auto-fix: {fix}")
+                    yarrrml = fixed_yarrrml
+                    data = fixed_data
+                    mappings = fixed_data["mappings"]
+                    # Re-run class check now that we've fixed it
+                    class_errors = _check_class_validity(mappings, ontology_raw)
+
+        # Fix 4: CLASS WARNING is advisory only — do NOT block pipeline.
+        # CLASS ERROR (metadata using wrong class) is blocking.
+        blocking_class_errors = [e for e in class_errors if e.startswith("CLASS ERROR")]
+        advisory_class_warnings = [e for e in class_errors if e.startswith("CLASS WARNING")]
+        if advisory_class_warnings:
+            for w in advisory_class_warnings:
+                print(f"    [INFO] {w}")   # log but don't block
+        all_errors.extend(blocking_class_errors)
 
         dup_errors, current_conflict_cols = _check_duplicate_predicates(mappings)
 
@@ -752,27 +1369,57 @@ def call_refiner_llm(state: AgentState) -> dict:
 
         all_errors.extend(dup_errors)
 
-        # ── Auto-fix redundant columns before reporting them ───────
-        redundancy_errors = _check_redundancy(mappings)
-        if redundancy_errors:
-            fixed_yarrrml, red_fixes = _auto_fix_redundancy(yarrrml, data, mappings)
-            if red_fixes:
+        # ── Auto-fix redundancy directly (merged check+fix) ───────
+        fixed_yarrrml, red_fixes = _auto_fix_redundancy(yarrrml, data, mappings)
+        if red_fixes:
+            fixed_data = _parse_yarrrml(fixed_yarrrml)
+            if fixed_data and isinstance(fixed_data.get("mappings"), dict):
+                for fix in red_fixes:
+                    print(f"    [FIX] Auto-fix: {fix}")
+                yarrrml = fixed_yarrrml
+                data = fixed_data
+                mappings = fixed_data["mappings"]
+        # No else needed — auto_fix_redundancy already handles detection internally
+
+        # ── Auto-fix intra-mapping duplicate PO entries ────────────
+        fixed_yarrrml, intra_fixes = _auto_fix_intra_mapping_duplicates(yarrrml, data, mappings)
+        if intra_fixes:
+            fixed_data = _parse_yarrrml(fixed_yarrrml)
+            if fixed_data and isinstance(fixed_data.get("mappings"), dict):
+                for fix in intra_fixes:
+                    print(f"    [FIX] Auto-fix: {fix}")
+                yarrrml = fixed_yarrrml
+                data = fixed_data
+                mappings = fixed_data["mappings"]
+
+        # ── Islands check — auto-fix first, report only if unfixable ──
+        if not all_errors:
+            fixed_yarrrml, island_fixes = _auto_fix_islands(yarrrml, data, mappings)
+            if island_fixes:
                 fixed_data = _parse_yarrrml(fixed_yarrrml)
                 if fixed_data and isinstance(fixed_data.get("mappings"), dict):
-                    fixed_mappings = fixed_data["mappings"]
-                    redundancy_errors2 = _check_redundancy(fixed_mappings)
-                    if not redundancy_errors2:
-                        for fix in red_fixes:
-                            print(f"    [FIX] Auto-fix: {fix}")
-                        yarrrml = fixed_yarrrml
-                        data = fixed_data
-                        mappings = fixed_mappings
-                        redundancy_errors = []
-
-        all_errors.extend(redundancy_errors)
+                    for fix in island_fixes:
+                        print(f"    [FIX] Auto-wired island: {fix}")
+                    yarrrml = fixed_yarrrml
+                    data = fixed_data
+                    mappings = fixed_data["mappings"]
+                    # Re-check — if islands are resolved, don't report them
+                    remaining_islands = _check_islands(mappings)
+                    all_errors.extend(remaining_islands)
+            else:
+                all_errors.extend(_check_islands(mappings))
 
     # Merge current + previous conflict columns
     all_conflict_cols = current_conflict_cols | prev_conflict_cols
+
+    # ── Fix 1: FLAT→MULTI-NODE override ───────────────────────────
+    # If the entity agent produced >1 mapping but the alignment label says
+    # FLAT, promote to MULTI-NODE so the relationship agent runs on next retry.
+    if mappings and len(mappings) > 1:
+        alignment = state.get("schema_alignment", {})
+        if not alignment.get("multi_node", False):
+            alignment["multi_node"] = True
+            print("    [Refiner] FLAT→MULTI-NODE promoted (>1 mapping detected)")
 
     # ── Phase 1b: column-coverage (tolerant of known conflicts) ──
     if csv_columns:
@@ -789,11 +1436,38 @@ def call_refiner_llm(state: AgentState) -> dict:
             empty_cols = _detect_empty_columns(csv_path)
             if empty_cols:
                 missing = [c for c in missing if c not in empty_cols]
+        # Ignore auto-generated index columns (e.g. "Unnamed: 0")
         if missing:
-            all_errors.append(
-                f"COLUMN COVERAGE FAILURE — {len(missing)} CSV column(s) "
-                f"are NOT referenced: [{', '.join(missing)}]."
+            missing = [c for c in missing
+                       if not c.startswith("Unnamed:") and c.lower() not in ("index",)]
+        if missing:
+            # ── Auto-inject before burning an LLM retry ────────
+            yarrrml, missing, inject_fixes = _auto_inject_missing_columns(
+                yarrrml, data, mappings, missing
             )
+            if inject_fixes:
+                data = _parse_yarrrml(yarrrml) or data
+                if data and isinstance(data.get("mappings"), dict):
+                    mappings = data["mappings"]
+                for fix in inject_fixes:
+                    print(f"    [Refiner] Auto-inject: {fix}")
+                # Persist injected column constraints so entity agent honours them
+                # on the next retry — format: {col: "pred (dtype) in MappingName"}
+                prev_injected = state.get("injected_column_constraints", {})
+                new_injected = dict(prev_injected)
+                for fix_str in inject_fixes:
+                    # Parse "'{col}' → [pred, dtype] in MappingName"
+                    m = re.match(r"'([^']+)'\s*→\s*\[([^,\]]+),\s*([^\]]+)\]\s+in\s+(\S+)", fix_str)
+                    if m:
+                        col_name, pred, dtype, mapping_name = m.groups()
+                        new_injected[col_name] = f"{pred} ({dtype}) in {mapping_name}"
+                if new_injected != prev_injected:
+                    state["injected_column_constraints"] = new_injected
+            if missing:
+                all_errors.append(
+                    f"COLUMN COVERAGE FAILURE — {len(missing)} CSV column(s) "
+                    f"are NOT referenced: [{', '.join(missing)}]."
+                )
 
     # ── Return early if any deterministic check failed ────────
     if all_errors:
@@ -810,39 +1484,43 @@ def call_refiner_llm(state: AgentState) -> dict:
             f"{assignment_hint}"
             f"INSTRUCTIONS FOR ARCHITECT:\n"
             f"1. Fix ALL listed problems in a single revision.\n"
-            f"2. Each data column → EXACTLY ONE mapping's po: list.\n"
-            f"3. The primary class must link to every secondary class "
-            f"via a 2-item object-property PO entry.\n"
-            f"4. Every column needs a UNIQUE predicate name.\n"
-            f"5. If no unique ontology predicate exists for a column, "
-            f"you may OMIT that column or use a derived predicate "
-            f"(e.g. column 'my_col' → 'prefix:myCol').\n"
+            f"2. Every CSV column must appear in at least one mapping.\n"
+            f"3. A column CAN appear in multiple mappings if it uses a "
+            f"DIFFERENT predicate in each (e.g. date → terms:created in "
+            f"Primary, eli:version_date in Metadata).\n"
+            f"4. Within a SINGLE mapping, every column must have a UNIQUE predicate.\n"
+            f"5. Use URI templates for same-CSV links, NOT joins.\n"
             f"6. Output the complete corrected YARRRML."
         )
         return {
             "feedback": feedback,
             "predicate_conflict_cols": sorted(all_conflict_cols),
             "fixed_yarrrml": yarrrml if yarrrml != original_yarrrml else None,
+            "injected_column_constraints": state.get("injected_column_constraints", {}),
         }
 
     # ── Phase 2: LLM-based semantic / URI-logic review ────────
-    retry_count = state.get("retry_count", 0)
-    llm = get_llm(role="refiner", retry_count=retry_count)
+    # Skip Phase 2 if all issues were handled deterministically
+    auto_fixes_applied = yarrrml != original_yarrrml
+    if auto_fixes_applied and not all_errors:
+        print("    [Refiner] All issues auto-fixed deterministically — skipping LLM phase.")
+        return {
+            "feedback": "APPROVED",
+            "predicate_conflict_cols": sorted(all_conflict_cols),
+            "fixed_yarrrml": yarrrml,
+            "injected_column_constraints": state.get("injected_column_constraints", {}),
+        }
+
+    from langchain_core.messages import SystemMessage, HumanMessage
+
+    llm = get_llm(role="refiner")
 
     ontology = state.get("ontology_info", {}).get("raw", "No ontology provided.")
     csv_col_list = ", ".join(sorted(csv_columns)) if csv_columns else "unknown"
 
-    prompt = f"""You are a YARRRML mapping validator.  Your ONLY job is to check
-whether the mapping below will translate and materialise correctly.
-
-ONTOLOGY CONTEXT (for reference only -- do NOT check prefix declarations here):
-{ontology}
-
-CSV COLUMNS:
-{csv_col_list}
-
-CURRENT YARRRML:
-{yarrrml}
+    # Static system prompt (cached by llama.cpp across calls)
+    system_prompt = """You are a YARRRML mapping validator.  Your ONLY job is to check
+whether a mapping will translate and materialise correctly.
 
 NOTE: Prefix completeness has ALREADY been verified by an automated check.
 Do NOT re-check whether prefixes are declared.  Do NOT flag unused prefixes.
@@ -850,14 +1528,17 @@ Do NOT re-check whether prefixes are declared.  Do NOT flag unused prefixes.
 CHECK ONLY THESE (all must pass for APPROVED):
 
 1. DATA TYPING
-   - Numeric columns -> xsd:integer, xsd:float, or xsd:double
+   - Numeric columns -> xsd:integer, xsd:float, xsd:double, xsd:long, xsd:decimal
    - Boolean columns -> xsd:boolean
    - Date/time columns -> xsd:date or xsd:dateTime
    - String columns -> xsd:string (or untyped, which defaults to string)
-   - Alternative valid type choices are NOT errors (e.g. xsd:float vs xsd:double).
+   - Alternative valid type choices are NOT errors (e.g. xsd:float vs xsd:double,
+     xsd:long vs xsd:integer, xsd:decimal vs xsd:float).  Do NOT flag these.
 
 2. rdf:type DECLARATION
    - Every mapping SHOULD have an rdf:type or `a` PO entry.
+   - A missing rdf:type is a minor warning, NOT a blocking error.
+     If everything else is fine, still respond with APPROVED.
 
 DO NOT FLAG ANY OF THE FOLLOWING:
 - Prefix declarations or unused prefixes (already verified)
@@ -875,8 +1556,27 @@ Otherwise, list ONLY the failing checks as a SHORT bullet-list (max 3 lines).
 Do NOT rewrite the YARRRML.  Do NOT explain passing checks.
 """
 
-    response = llm.invoke(prompt)
-    llm_feedback = response.content.strip()
+    # Dynamic human message (changes per call)
+    human_prompt = f"""ONTOLOGY CONTEXT (for reference only):
+{ontology}
+
+CSV COLUMNS:
+{csv_col_list}
+
+CURRENT YARRRML:
+{yarrrml}
+
+Validate the mapping now.
+"""
+
+    # Use streaming to keep connection alive during long generations
+    llm_feedback = ""
+    for chunk in llm.stream([
+        SystemMessage(content=system_prompt),
+        HumanMessage(content=human_prompt),
+    ]):
+        llm_feedback += chunk.content
+    llm_feedback = llm_feedback.strip()
 
     # ── Post-processing: filter out non-actionable LLM feedback ──
     # Despite the prompt instructions, LLMs often flag issues that
@@ -889,6 +1589,7 @@ Do NOT rewrite the YARRRML.  Do NOT explain passing checks.
         "feedback": llm_feedback,
         "predicate_conflict_cols": sorted(all_conflict_cols),
         "fixed_yarrrml": yarrrml if yarrrml != original_yarrrml else None,
+        "injected_column_constraints": state.get("injected_column_constraints", {}),
     }
 
 
@@ -935,6 +1636,20 @@ _NON_ACTIONABLE_PATTERNS = [
 
     # ── Controlled vocabulary / enum (YARRRML can't enforce these) ──
     "controlled vocabulary",
+
+    # ── Data type alternatives (all are valid, not errors) ──
+    "xsd:long",
+    "xsd:integer",
+    "should be xsd:",
+    "mapped to xsd:",
+    "data typing",
+
+    # ── rdf:type warnings (minor, not blocking) ──
+    "missing rdf:type",
+    "missing `rdf:type`",
+    "no rdf:type",
+    "should have an rdf:type",
+    "should have a rdf:type",
     "enum-like",
     "enum constraint",
     "conform to expected value",

@@ -16,6 +16,12 @@ Usage:
 
     # Specify a custom gold KG path for Level 2
     python main.py --eval 1 2 3 --gold data/gold/bikeshare_gold.nt
+
+    # Run with Competency Questions (inline)
+    python main.py --cqs "Can I identify the publisher of the parent document?" "Who authored it?"
+
+    # Run with Competency Questions (from file, one per line)
+    python main.py --cqs @cqs.txt
 """
 
 import argparse
@@ -51,6 +57,12 @@ def parse_args():
              "Optionally pass the number of latest runs to compare (default: 5). "
              "Example: --dashboard 3",
     )
+    parser.add_argument(
+        "--cqs", nargs="*", type=str, default=None,
+        help="Competency Questions for CQ validation. "
+             "Pass as quoted strings: --cqs 'Can I identify the publisher?' 'Who authored it?' "
+             "Or pass a file path: --cqs @cqs.txt (one question per line).",
+    )
     return parser.parse_args()
 
 
@@ -66,17 +78,44 @@ def main():
     run_directory = f"data/output/run_{current_run_timestamp}"
     os.makedirs(run_directory, exist_ok=True)
 
+    # ── Parse Competency Questions ───────────────────────────────
+    competency_questions = []
+    if args.cqs:
+        for item in args.cqs:
+            # Support both @file.txt and bare file.txt for file loading
+            file_path = item[1:] if item.startswith("@") else item
+            if os.path.isfile(file_path):
+                # Load from file: one question per line
+                with open(file_path) as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith("#"):
+                            competency_questions.append(line)
+            else:
+                competency_questions.append(item)
+
+    if competency_questions:
+        print(f"  Loaded {len(competency_questions)} Competency Question(s)")
+        for i, q in enumerate(competency_questions, 1):
+            print(f"    CQ{i}: {q}")
+
     initial_state = {
         "csv_path": os.getenv("INPUT_CSV_PATH"),
         "ontology_path": os.getenv("INPUT_ONTOLOGY_PATH"),
         "base_uri": os.getenv("BASE_URI", "http://example.org/"),
+        "competency_questions": competency_questions,
         "schema_info": {},
         "ontology_info": {},
         "mapping_plan": {},
+        "schema_alignment": {},
+        "prefixes_output": "",
+        "entity_yarrrml": "",
         "yarrrml_output": "",
         "rdf_output": "",
+        "cq_validation": {},
         "feedback": "",
         "retry_count": 0,
+        "cq_retry_count": 0,
         "messages": [],
         "run_dir": run_directory,
         "predicate_conflict_cols": [],
@@ -98,9 +137,23 @@ def main():
             if "messages" in output:
                 print(f"    {output['messages'][-1]}")
 
+            if node_name == "align_schema":
+                alignment = output.get("schema_alignment", {})
+                tag = "MULTI-NODE" if alignment.get("multi_node") else "FLAT"
+                print(f"    Entity Structure: {tag}")
+
             if node_name == "validate_yarrrml":
                 status = "VALID" if "PASSED" in output.get("feedback", "") else "INVALID"
                 print(f"    Syntax Status: {status}")
+
+            if node_name == "validate_cqs":
+                fb = output.get("feedback", "")
+                if "CQ_SKIPPED" in fb:
+                    print(f"    CQ Status: SKIPPED (no competency questions)")
+                elif "CQ_PASSED" in fb:
+                    print(f"    CQ Status: ALL PASSED")
+                else:
+                    print(f"    CQ Status: FAILED — re-routing for fix")
 
             if node_name == "refine_logic":
                 print(f"    Refiner Feedback: {output.get('feedback', 'No feedback')}")
@@ -130,13 +183,22 @@ def main():
         else:
             print("[FAIL] Failure: Knowledge Graph was not generated.")
 
-    # Save YARRRML
+    # Save YARRRML (even on failure — for debugging)
     yarrrml_content = result.get("yarrrml_output", "")
     if yarrrml_content:
         mapping_filename = os.path.join(run_directory, "final_mapping.yaml")
         with open(mapping_filename, "w") as f:
             f.write(yarrrml_content)
         print(f" Mapping saved to: {mapping_filename}")
+
+    # List per-attempt debug files
+    debug_dir = os.path.join(run_directory, "debug")
+    if os.path.isdir(debug_dir):
+        attempt_files = sorted(f for f in os.listdir(debug_dir) if f.startswith("attempt_"))
+        if attempt_files:
+            print(f" Debug files ({len(attempt_files)}) saved in: {debug_dir}/")
+            for f in attempt_files:
+                print(f"    - {f}")
 
     # Check RDF output
     rdf_path = result.get("rdf_output", "")

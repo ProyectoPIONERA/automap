@@ -1,19 +1,9 @@
 from config.settings import get_llm
+from langchain_core.messages import SystemMessage, HumanMessage
 
-
-def call_mapper_llm(schema, ontology):
-    # Use the role-aware factory so this agent can have its own
-    # model/temperature configuration.
-    llm = get_llm(role="mapper_agent")
-
-    prompt = f"""You are a semantic mapping expert.  Your job is to map CSV columns
+# ── Static system prompt (cached by llama.cpp across calls) ──
+_SYSTEM_PROMPT = """You are a semantic mapping expert.  Your job is to map CSV columns
 to ontology classes and properties.
-
-CSV SCHEMA (columns + sample data):
-{schema}
-
-ONTOLOGY (classes, properties, prefixes):
-{ontology}
 
 INSTRUCTIONS:
 1. Identify which ontology CLASS(es) the CSV rows represent.
@@ -40,5 +30,22 @@ OUTPUT FORMAT — for each mapping:
 
 Use ONLY vocabulary from the ontology.  Do NOT invent prefixes or predicates.
 """
-    response = llm.invoke(prompt)
+
+
+def call_mapper_llm(schema, ontology):
+    llm = get_llm(role="mapper_agent")
+
+    human_prompt = f"""CSV SCHEMA (columns + sample data):
+{schema}
+
+ONTOLOGY (classes, properties, prefixes):
+{ontology}
+
+Map the CSV columns to ontology classes and properties now.
+"""
+
+    response = llm.invoke([
+        SystemMessage(content=_SYSTEM_PROMPT),
+        HumanMessage(content=human_prompt),
+    ])
     return response.content

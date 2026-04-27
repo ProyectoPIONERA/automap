@@ -123,12 +123,15 @@ def run_single(
         "schema_info": {},
         "ontology_info": {},
         "mapping_plan": {},
+        "prefixes_output": "",
+        "entity_yarrrml": "",
         "yarrrml_output": "",
         "rdf_output": "",
         "feedback": "",
         "retry_count": 0,
         "messages": [],
         "run_dir": run_dir,
+        "predicate_conflict_cols": [],
     }
 
     config = {"configurable": {"thread_id": str(uuid.uuid4())}}

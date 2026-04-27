@@ -9,25 +9,55 @@ load_dotenv()
 ROLE_MODEL_ENV = {
     "schema_agent": "LLM_MODEL_SCHEMA",
     "mapper_agent": "LLM_MODEL_MAPPER",
+    "schema_alignment": "LLM_MODEL_ALIGNMENT",
     "yarrrml_architect": "LLM_MODEL_YARRRML",
+    "prefix_agent": "LLM_MODEL_YARRRML",
+    "entity_builder": "LLM_MODEL_YARRRML",
+    "relationship_linker": "LLM_MODEL_YARRRML",
+    "cq_validator": "LLM_MODEL_CQ",
     "refiner": "LLM_MODEL_REFINER",
 }
 
 ROLE_TEMPERATURE_ENV = {
     "schema_agent": "LLM_TEMP_SCHEMA",
     "mapper_agent": "LLM_TEMP_MAPPER",
+    "schema_alignment": "LLM_TEMP_ALIGNMENT",
     "yarrrml_architect": "LLM_TEMP_YARRRML",
+    "prefix_agent": "LLM_TEMP_YARRRML",
+    "entity_builder": "LLM_TEMP_YARRRML",
+    "relationship_linker": "LLM_TEMP_YARRRML",
+    "cq_validator": "LLM_TEMP_CQ",
     "refiner": "LLM_TEMP_REFINER",
 }
 
 # Sensible defaults if per-role env vars are not provided.
-DEFAULT_MODEL = os.getenv("LLM_MODEL_DEFAULT", "qwen/qwen3-coder-30b")
+DEFAULT_MODEL = os.getenv("LLM_MODEL_DEFAULT", "qwen2.5-coder-14b-instruct")
 
 DEFAULT_TEMPERATURES = {
-    "schema_agent": 0.5,
-    "mapper_agent": 0.4,
-    "yarrrml_architect": 0.1,
+    "schema_agent": 0.3,
+    "mapper_agent": 0.3,
+    "schema_alignment": 0.2,
+    "yarrrml_architect": 0.3,
+    "prefix_agent": 0.2,
+    "entity_builder": 0.3,
+    "relationship_linker": 0.3,
+    "cq_validator": 0.2,
     "refiner": 0.2,
+}
+
+# Per-role timeout defaults (seconds).  Capped at 280s to stay under
+# LM Studio's hard 300s server-side timeout.  Override globally with
+# the LLM_TIMEOUT env var.
+DEFAULT_TIMEOUTS = {
+    "schema_agent": 120,
+    "mapper_agent": 120,
+    "schema_alignment": 280,
+    "yarrrml_architect": 280,
+    "prefix_agent": 120,
+    "entity_builder": 280,
+    "relationship_linker": 280,
+    "cq_validator": 280,
+    "refiner": 280,
 }
 
 
@@ -72,128 +102,45 @@ def _resolve_temperature_for_role(role: str | None) -> float:
     return 0.3
 
 
-# ────────────────────────────────────────────────────────────────────
-# Tiered retry-sampling configuration
-# ────────────────────────────────────────────────────────────────────
-# On the first attempt (retry_count == 0) the role's default temperature
-# is used.  As retries increase the strategy progressively raises the
-# temperature so the LLM doesn't keep producing the same broken output.
-#
-# Only universally-supported parameters (temperature, max_tokens) are
-# used so the pipeline remains provider-agnostic (LM Studio, CometAPI,
-# vLLM, OpenAI, etc.).
-#
-#   Tier 0 (retry 0)     – role defaults
-#   Tier 1 (retry 1-2)   – slight temperature bump
-#   Tier 2 (retry 3-4)   – moderate temperature bump
-#   Tier 3 (retry 5+)    – maximum diversity
-# ────────────────────────────────────────────────────────────────────
-
-_DEFAULT_MAX_TOKENS = None          # let the model decide
-
-
-def _resolve_retry_params(
-    base_temperature: float,
-    retry_count: int,
-) -> dict:
-    """Return a sampling-parameter dict for the given retry tier.
-
-    Only uses ``temperature`` and ``max_tokens`` — parameters supported
-    by every OpenAI-compatible provider.
-
-    Returns
-    -------
-    dict with keys: temperature, max_tokens.
-    """
-    temperature = base_temperature
-    max_tokens = _DEFAULT_MAX_TOKENS
-
-    if retry_count == 0:
-        # Tier 0 – role defaults
-        pass
-
-    elif retry_count <= 2:
-        # Tier 1 – slight exploration
-        temperature = min(base_temperature + 0.10, 0.55)
-        max_tokens = 7000
-
-    elif retry_count <= 4:
-        # Tier 2 – moderate exploration
-        temperature = min(base_temperature + 0.20, 0.65)
-        max_tokens = 7000
-
-    else:
-        # Tier 3 – maximum diversity
-        temperature = 0.8
-        max_tokens = 7000
-
-    return {
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-    }
-
-
-def get_llm(role: str | None = None, retry_count: int = 0):
+def get_llm(role: str | None = None):
     """Factory for creating a ChatOpenAI client.
 
     The ``role`` argument lets different agents use different models or
-    base temperatures while sharing the same provider.
+    temperatures while sharing the same provider.
 
-    The ``retry_count`` drives a **tiered sampling strategy** that
-    progressively raises the temperature so the LLM doesn't keep
-    producing the same broken output:
-
-    * **Tier 0** (first attempt) – role defaults.
-    * **Tier 1** (retry 1-2) – slight temperature bump.
-    * **Tier 2** (retry 3-4) – moderate temperature bump.
-    * **Tier 3** (retry 5+) – maximum diversity.
-
-    Only universally-supported parameters (temperature, max_tokens) are
-    used so the pipeline remains provider-agnostic.
+    Fixed temperatures are used per role — no dynamic retry-based
+    temperature changes.  Low temperatures ensure local LLMs follow
+    the one-shot YARRRML examples precisely.
 
     Roles currently used:
       - "schema_agent"
       - "mapper_agent"
-      - "yarrrml_architect"
+      - "prefix_agent"
+      - "entity_builder"
+      - "relationship_linker"
       - "refiner"
     """
     provider = os.getenv("LLM_PROVIDER", "lm_studio")
 
     model_name = _resolve_model_for_role(role)
-    base_temperature = _resolve_temperature_for_role(role)
+    temperature = _resolve_temperature_for_role(role)
 
-    # ── Resolve the sampling parameter set for this retry tier ──
-    params = _resolve_retry_params(base_temperature, retry_count)
-
-    temperature = params["temperature"]
-    max_tokens = params["max_tokens"]
-
-    # Log active retry parameters for observability
-    if retry_count > 0:
-        tier = (
-            "Tier 1" if retry_count <= 2 else
-            "Tier 2" if retry_count <= 4 else
-            "Tier 3"
-        )
-        print(
-            f"  [RETRY] [{role or 'default'}] retry #{retry_count} -> {tier}  "
-            f"temp={temperature:.2f}"
-            + (f"  max_tokens={max_tokens}" if max_tokens else "")
-        )
+    # Per-role timeout: env override → role default → global fallback
+    global_timeout = float(os.getenv("LLM_TIMEOUT", "0"))
+    role_timeout = DEFAULT_TIMEOUTS.get(role, 300) if role else 300
+    timeout = global_timeout if global_timeout > 0 else role_timeout
 
     # ── Build the ChatOpenAI instance per provider ───────────────
 
     def _build_client(base_url: str, api_key: str, model: str) -> ChatOpenAI:
-        """Shared constructor that wires sampling knobs."""
-        kwargs: dict = dict(
+        """Shared constructor."""
+        return ChatOpenAI(
             base_url=base_url,
             api_key=api_key,
             model=model,
             temperature=temperature,
+            timeout=timeout,
         )
-        if max_tokens is not None:
-            kwargs["max_tokens"] = max_tokens
-        return ChatOpenAI(**kwargs)
 
     if provider == "lm_studio":
         lm_url = os.getenv("LM_STUDIO_URL", "http://localhost:1234/v1")
@@ -219,9 +166,36 @@ def get_llm(role: str | None = None, retry_count: int = 0):
     return _build_client(base_url, "lm-studio", model_name)
 
 
+def get_llm_with_retry(role: str | None = None, max_retries: int = 2):
+    """Return an LLM client wrapped with retry logic.
+
+    Uses LangChain's ``with_retry`` to automatically retry on transient
+    failures (timeouts, connection errors, server errors) with exponential
+    backoff.  Falls back to the standard ``get_llm()`` client.
+
+    Parameters
+    ----------
+    role : str | None
+        Agent role (same as ``get_llm``).
+    max_retries : int
+        Maximum number of retry attempts (default 2 — total 3 calls).
+    """
+    import openai
+
+    llm = get_llm(role=role)
+    return llm.with_retry(
+        retry_if_exception_type=(
+            openai.APITimeoutError,
+            openai.APIConnectionError,
+            openai.InternalServerError,
+        ),
+        stop_after_attempt=max_retries,
+        wait_exponential_jitter=True,
+    )
+
+
 def get_llm_metadata() -> dict:
-    """Return a snapshot of every agent's resolved model + temperature,
-    plus the tiered retry-strategy parameters.
+    """Return a snapshot of every agent's resolved model + temperature.
 
     Useful for stamping eval_metrics.json so you can trace which
     configuration produced which results.
@@ -229,11 +203,14 @@ def get_llm_metadata() -> dict:
     Returns
     -------
     dict – keys like ``provider``, ``default_model``,
-           ``schema_agent_model``, ``schema_agent_temperature``,
-           and ``retry_strategy_tiers`` with the full sampling config.
+           ``schema_agent_model``, ``schema_agent_temperature``, etc.
     """
     provider = os.getenv("LLM_PROVIDER", "lm_studio")
-    roles = ["schema_agent", "mapper_agent", "yarrrml_architect", "refiner"]
+    roles = [
+        "schema_agent", "mapper_agent", "schema_alignment",
+        "prefix_agent", "entity_builder", "relationship_linker",
+        "cq_validator", "refiner",
+    ]
 
     # Determine the effective default model (accounts for COMET_MODEL)
     effective_default = _resolve_model_for_role(None)
@@ -249,15 +226,4 @@ def get_llm_metadata() -> dict:
         meta[f"{role}_model"] = _resolve_model_for_role(role)
         meta[f"{role}_temperature"] = _resolve_temperature_for_role(role)
 
-    # Record the retry-strategy tiers so experiments are reproducible
-    meta["retry_strategy_tiers"] = {
-        "tier_0": "role defaults",
-        "tier_1_retries": "1-2",
-        "tier_1": _resolve_retry_params(0.2, 1),   # representative
-        "tier_2_retries": "3-4",
-        "tier_2": _resolve_retry_params(0.2, 3),
-        "tier_3_retries": "5+",
-        "tier_3": _resolve_retry_params(0.2, 5),
-    }
     return meta
-

@@ -17,6 +17,7 @@ dependencies = [
     "rdflib>=7.6.0",
     "streamlit>=1.45.0",
     "yatter>=2.0.3",
+    "pyyaml>=6.0",
 ]
 
 [project.scripts]
