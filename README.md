@@ -276,7 +276,7 @@ If you use this tool in an academic context, please cite:
 
 This work has received funding from the **PIONERA** project (*Enhancing interoperability in data spaces through artificial intelligence*), a project funded in the context of the call for Technological Products and Services for Data Spaces of the **Ministry for Digital Transformation and Public Administration** within the framework of the **PRTR** funded by the **European Union (NextGenerationEU)**.
 
-<img width="1961" height="169" alt="image" src="https://github.com/user-attachments/assets/941a0db1-547f-48d0-b627-904098d607c9" />
+<img width="1961" height="169" alt="image" src="https://github.com/user-attachments/assets/75442c2f-fe94-4247-88fd-2566cdae867b" />
 
 ## Contributors
 
