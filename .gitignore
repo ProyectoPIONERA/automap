@@ -16,8 +16,15 @@ wheels/
 .venv/
 venv/
 
-#Ignoring the contents of the data directory
+# Ignoring the contents of the data directory
 data/input/*
 data/output/*
 
+# Environment files — never commit real keys
 .env
+.env.local
+.env.*.local
+scripts/.env
+
+# Keep the example template committed
+!.env.example

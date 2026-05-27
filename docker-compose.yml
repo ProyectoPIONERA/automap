@@ -1,4 +1,3 @@
-
 services:
   rml-agent:
     build:
@@ -9,4 +8,7 @@ services:
     env_file:
       - .env
     volumes:
-      - .:/app
+      - ./data:/app/data          # persist input/output data
+      - ./.env:/app/.env:ro       # mount .env read-only
+    # Override the default run here, e.g.:
+    # command: ["--shacl", "--sparql"]
