@@ -1,0 +1,239 @@
+@prefix dbo: <http://dbpedia.org/ontology/> .
+@prefix dul: <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#> .
+@prefix ns1: <https://w3id.org/def/astrea#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://astrea.linkeddata.es/report> a ns1:ShapeReport ;
+    ns1:contains <https://astrea.linkeddata.es/shapes#1003312a31f1e6b79a55760ce17c3959>,
+        <https://astrea.linkeddata.es/shapes#1900a4439ff01ce692413bcc8606c840>,
+        <https://astrea.linkeddata.es/shapes#1a9d78f6e05997a1e47f3ac0a8acd315>,
+        <https://astrea.linkeddata.es/shapes#1e8f5395446240b15d0b90dec5c09ae3>,
+        <https://astrea.linkeddata.es/shapes#1f4e5a6db742d651dea225c987fe1913>,
+        <https://astrea.linkeddata.es/shapes#28d47e80d6ed878b4eea00281c6fca3f>,
+        <https://astrea.linkeddata.es/shapes#2b23517923a2f1fb4663cd2633428e74>,
+        <https://astrea.linkeddata.es/shapes#335a6520cf4bc92d8c36600e8519c6a3>,
+        <https://astrea.linkeddata.es/shapes#41d93198fab7c9527cfd87448cd25f42>,
+        <https://astrea.linkeddata.es/shapes#4823978b84e641eb647e9805a8a1dae0>,
+        <https://astrea.linkeddata.es/shapes#5920bc3683a19ce9216c90564e2416e3>,
+        <https://astrea.linkeddata.es/shapes#5c856ffc1f01d6be8c8e7ebc678f93ad>,
+        <https://astrea.linkeddata.es/shapes#705dd76875688552c4b99b53b3c69509>,
+        <https://astrea.linkeddata.es/shapes#768a7008144825028a6321d905e91060>,
+        <https://astrea.linkeddata.es/shapes#83b42067b756c14c884f3a7b845edfd4>,
+        <https://astrea.linkeddata.es/shapes#88b2de82883e5f595260901b1441e481>,
+        <https://astrea.linkeddata.es/shapes#8b0c9996bd14b9ceb5fd765840ed7fc6>,
+        <https://astrea.linkeddata.es/shapes#8ee9cec54d071c19907c50a37579a1a8>,
+        <https://astrea.linkeddata.es/shapes#b5dad4bcb62cffe63247fa398a0f94ed>,
+        <https://astrea.linkeddata.es/shapes#b69c4d90f0dc6a7ebff84f638c5dfe34>,
+        <https://astrea.linkeddata.es/shapes#bd4d7770e5f875717dcd6177e81de998>,
+        <https://astrea.linkeddata.es/shapes#c724e53251b0b1508bf84e8cd0bc91c4>,
+        <https://astrea.linkeddata.es/shapes#ce2de04c7ef3ff4b40e4287da8d40477>,
+        <https://astrea.linkeddata.es/shapes#d69eee674debadcd2acbf22e25a681db>,
+        <https://astrea.linkeddata.es/shapes#dfb63b2c1f4001a1ee2c62ff77a8c266>,
+        <https://astrea.linkeddata.es/shapes#e614b91b23e9ff858ed0062361d99b91>,
+        <https://astrea.linkeddata.es/shapes#f1c80f695c016ac6ba894c2172829768> ;
+    ns1:generatedShapesFrom <https://astrea.linkeddata.es/report/0620946147> .
+
+<https://astrea.linkeddata.es/report/0620946147> a ns1:ReportEntry ;
+    ns1:message "Shapes generated with no errors" ;
+    ns1:statusCode "200"^^xsd:int .
+
+<https://astrea.linkeddata.es/shapes#1f4e5a6db742d651dea225c987fe1913> a sh:PropertyShape ;
+    rdfs:label "executive producer" ;
+    sh:class dbo:Person ;
+    sh:name "executive producer" ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path dbo:executiveProducer .
+
+<https://astrea.linkeddata.es/shapes#41d93198fab7c9527cfd87448cd25f42> a sh:NodeShape ;
+    rdfs:label "film" ;
+    sh:name "film" ;
+    sh:nodeKind sh:IRI ;
+    sh:property <https://astrea.linkeddata.es/shapes#1900a4439ff01ce692413bcc8606c840>,
+        <https://astrea.linkeddata.es/shapes#d69eee674debadcd2acbf22e25a681db> ;
+    sh:targetClass dbo:Film .
+
+<https://astrea.linkeddata.es/shapes#5920bc3683a19ce9216c90564e2416e3> a sh:PropertyShape ;
+    rdfs:label "A relation between two entities participating in a same Situation; e.g., 'Our company provides an antivenom service' (the situation is the service, the two entities are the company and the antivenom).",
+        "is in the same setting as" ;
+    sh:description "A relation between two entities participating in a same Situation; e.g., 'Our company provides an antivenom service' (the situation is the service, the two entities are the company and the antivenom)." ;
+    sh:name "is in the same setting as" ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path dul:sameSettingAs .
+
+<https://astrea.linkeddata.es/shapes#768a7008144825028a6321d905e91060> a sh:NodeShape ;
+    rdfs:label "work" ;
+    sh:name "work" ;
+    sh:nodeKind sh:IRI ;
+    sh:property <https://astrea.linkeddata.es/shapes#1003312a31f1e6b79a55760ce17c3959>,
+        <https://astrea.linkeddata.es/shapes#1e8f5395446240b15d0b90dec5c09ae3>,
+        <https://astrea.linkeddata.es/shapes#2b23517923a2f1fb4663cd2633428e74>,
+        <https://astrea.linkeddata.es/shapes#5c856ffc1f01d6be8c8e7ebc678f93ad>,
+        <https://astrea.linkeddata.es/shapes#705dd76875688552c4b99b53b3c69509>,
+        <https://astrea.linkeddata.es/shapes#8ee9cec54d071c19907c50a37579a1a8>,
+        <https://astrea.linkeddata.es/shapes#b5dad4bcb62cffe63247fa398a0f94ed>,
+        <https://astrea.linkeddata.es/shapes#bd4d7770e5f875717dcd6177e81de998>,
+        <https://astrea.linkeddata.es/shapes#c724e53251b0b1508bf84e8cd0bc91c4>,
+        <https://astrea.linkeddata.es/shapes#ce2de04c7ef3ff4b40e4287da8d40477>,
+        <https://astrea.linkeddata.es/shapes#dfb63b2c1f4001a1ee2c62ff77a8c266> ;
+    sh:targetClass dbo:Work .
+
+<https://astrea.linkeddata.es/shapes#83b42067b756c14c884f3a7b845edfd4> a sh:NodeShape ;
+    rdfs:label "actor" ;
+    sh:name "actor" ;
+    sh:nodeKind sh:IRI ;
+    sh:targetClass dbo:Actor .
+
+<https://astrea.linkeddata.es/shapes#88b2de82883e5f595260901b1441e481> a sh:NodeShape ;
+    rdfs:label "video game" ;
+    sh:name "video game" ;
+    sh:nodeKind sh:IRI ;
+    sh:targetClass dbo:VideoGame .
+
+<https://astrea.linkeddata.es/shapes#b69c4d90f0dc6a7ebff84f638c5dfe34> a sh:NodeShape ;
+    sh:nodeKind sh:IRI ;
+    sh:property <https://astrea.linkeddata.es/shapes#28d47e80d6ed878b4eea00281c6fca3f>,
+        <https://astrea.linkeddata.es/shapes#335a6520cf4bc92d8c36600e8519c6a3>,
+        <https://astrea.linkeddata.es/shapes#8b0c9996bd14b9ceb5fd765840ed7fc6> ;
+    sh:targetClass dbo:Person .
+
+<https://astrea.linkeddata.es/shapes#e614b91b23e9ff858ed0062361d99b91> a sh:PropertyShape ;
+    rdfs:label "A relation between two objects participating in a same Event; e.g., 'Vitas and Jimmy are playing tennis'.",
+        "co-participates with" ;
+    sh:description "A relation between two objects participating in a same Event; e.g., 'Vitas and Jimmy are playing tennis'." ;
+    sh:name "co-participates with" ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path dul:coparticipatesWith .
+
+<https://astrea.linkeddata.es/shapes#f1c80f695c016ac6ba894c2172829768> a sh:PropertyShape ;
+    rdfs:label "editor",
+        "Herausgeber"@de,
+        "redaktor"@pl ;
+    sh:class dbo:Agent ;
+    sh:name "editor",
+        "Herausgeber"@de,
+        "redaktor"@pl ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path dbo:editor .
+
+<https://astrea.linkeddata.es/shapes#1003312a31f1e6b79a55760ce17c3959> a sh:PropertyShape ;
+    rdfs:label "original title" ;
+    sh:datatype rdf:langString ;
+    sh:name "original title" ;
+    sh:nodeKind sh:Literal ;
+    sh:path dbo:originalTitle .
+
+<https://astrea.linkeddata.es/shapes#1900a4439ff01ce692413bcc8606c840> a sh:PropertyShape ;
+    rdfs:label "film director" ;
+    sh:class dbo:Person ;
+    sh:name "film director" ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path dbo:director .
+
+<https://astrea.linkeddata.es/shapes#1e8f5395446240b15d0b90dec5c09ae3> a sh:PropertyShape ;
+    rdfs:label "title" ;
+    sh:datatype rdf:langString ;
+    sh:name "title" ;
+    sh:nodeKind sh:Literal ;
+    sh:path dbo:title .
+
+<https://astrea.linkeddata.es/shapes#28d47e80d6ed878b4eea00281c6fca3f> a sh:PropertyShape ;
+    rdfs:label "birth year" ;
+    sh:datatype xsd:gYear ;
+    sh:name "birth year" ;
+    sh:nodeKind sh:Literal ;
+    sh:path dbo:birthYear ;
+    sh:pattern "-?([1-9][0-9]{3,}|0[0-9]{3})(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?" .
+
+<https://astrea.linkeddata.es/shapes#2b23517923a2f1fb4663cd2633428e74> a sh:PropertyShape ;
+    rdfs:label "genre" ;
+    sh:datatype rdf:langString ;
+    sh:name "genre" ;
+    sh:nodeKind sh:Literal ;
+    sh:path dbo:genre .
+
+<https://astrea.linkeddata.es/shapes#335a6520cf4bc92d8c36600e8519c6a3> a sh:PropertyShape ;
+    rdfs:label "name" ;
+    sh:datatype rdf:langString ;
+    sh:name "name" ;
+    sh:nodeKind sh:Literal ;
+    sh:path dbo:name .
+
+<https://astrea.linkeddata.es/shapes#5c856ffc1f01d6be8c8e7ebc678f93ad> a sh:PropertyShape ;
+    rdfs:label "runtime (m)" ;
+    sh:datatype <https://dbpedia.org/datatype/minute> ;
+    sh:name "runtime (m)" ;
+    sh:nodeKind sh:Literal ;
+    sh:path <http://dbpedia.org/ontology/Work/runtime> .
+
+<https://astrea.linkeddata.es/shapes#705dd76875688552c4b99b53b3c69509> a sh:PropertyShape ;
+    rdfs:label "writer" ;
+    sh:class dbo:Person ;
+    sh:name "writer" ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path dbo:writer .
+
+<https://astrea.linkeddata.es/shapes#8b0c9996bd14b9ceb5fd765840ed7fc6> a sh:PropertyShape ;
+    rdfs:label "death year" ;
+    sh:datatype xsd:gYear ;
+    sh:name "death year" ;
+    sh:nodeKind sh:Literal ;
+    sh:path dbo:deathYear ;
+    sh:pattern "-?([1-9][0-9]{3,}|0[0-9]{3})(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?" .
+
+<https://astrea.linkeddata.es/shapes#8ee9cec54d071c19907c50a37579a1a8> a sh:PropertyShape ;
+    rdfs:label "runtime (s)" ;
+    sh:datatype xsd:double ;
+    sh:name "runtime (s)" ;
+    sh:nodeKind sh:Literal ;
+    sh:path dbo:runtime ;
+    sh:pattern "(\\+|-)?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)([Ee](\\+|-)?[0-9]+)?|(\\+|-)?INF|NaN" .
+
+<https://astrea.linkeddata.es/shapes#b5dad4bcb62cffe63247fa398a0f94ed> a sh:PropertyShape ;
+    rdfs:label "composer" ;
+    sh:class dbo:Person ;
+    sh:name "composer" ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path dbo:composer .
+
+<https://astrea.linkeddata.es/shapes#bd4d7770e5f875717dcd6177e81de998> a sh:PropertyShape ;
+    rdfs:label "end year" ;
+    sh:datatype xsd:gYear ;
+    sh:name "end year" ;
+    sh:nodeKind sh:Literal ;
+    sh:path dbo:endYear ;
+    sh:pattern "-?([1-9][0-9]{3,}|0[0-9]{3})(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?" .
+
+<https://astrea.linkeddata.es/shapes#c724e53251b0b1508bf84e8cd0bc91c4> a sh:PropertyShape ;
+    rdfs:label "The producer of the creative work.",
+        "producer" ;
+    sh:class dbo:Agent ;
+    sh:description "The producer of the creative work." ;
+    sh:name "producer" ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path dbo:producer .
+
+<https://astrea.linkeddata.es/shapes#ce2de04c7ef3ff4b40e4287da8d40477> a sh:PropertyShape ;
+    rdfs:label "starring" ;
+    sh:class dbo:Actor ;
+    sh:name "starring" ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path dbo:starring .
+
+<https://astrea.linkeddata.es/shapes#d69eee674debadcd2acbf22e25a681db> a sh:PropertyShape ;
+    rdfs:label "editing" ;
+    sh:class dbo:Person ;
+    sh:name "editing" ;
+    sh:nodeKind sh:BlankNodeOrIRI ;
+    sh:path dbo:editing .
+
+<https://astrea.linkeddata.es/shapes#dfb63b2c1f4001a1ee2c62ff77a8c266> a sh:PropertyShape ;
+    rdfs:label "start year" ;
+    sh:datatype xsd:gYear ;
+    sh:name "start year" ;
+    sh:nodeKind sh:Literal ;
+    sh:path dbo:startYear ;
+    sh:pattern "-?([1-9][0-9]{3,}|0[0-9]{3})(Z|(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?" .
+

@@ -1,0 +1,72 @@
+[
+  {
+    "cq": "Which films exist in the dataset?",
+    "sparql": "PREFIX dbo: <http://dbpedia.org/ontology/>\nPREFIX ex: <http://example.org/>\nPREFIX mykg: <http://mykg.org/resource/>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n\nASK {\n  ?film a dbo:Film .\n}",
+    "passed": true,
+    "diagnosis": "",
+    "source": "generated_cq"
+  },
+  {
+    "cq": "What is the runtime of a given film?",
+    "sparql": "PREFIX dbo: <http://dbpedia.org/ontology/>\nPREFIX ex: <http://example.org/>\nPREFIX mykg: <http://mykg.org/resource/>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n\nASK {\n  ?film a dbo:Film ;\n        dbo:runtime ?runtime .\n}",
+    "passed": true,
+    "diagnosis": "",
+    "source": "generated_cq"
+  },
+  {
+    "cq": "Which actors are linked to a specific film via their roles?",
+    "sparql": "PREFIX dbo: <http://dbpedia.org/ontology/>\nPREFIX ex: <http://example.org/>\nPREFIX mykg: <http://mykg.org/resource/>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n\nASK {\n  ?actor a dbo:Person ;\n         dbo:profession \"Actor\" .\n  ?film a dbo:Film ;\n        dbo:title ?title .\n  ?actor dbo:starring ?film .\n}",
+    "passed": false,
+    "diagnosis": "ASK returned false. Missing: ?actor a dbo:Person ;\n         dbo:profession \"Actor\" .\n  ?film a dbo:Film ;\n        dbo:title ?title .\n  ?actor dbo:starring ?film .",
+    "source": "generated_cq"
+  },
+  {
+    "cq": "How many years has a person lived based on their birth and death year?",
+    "sparql": "PREFIX mykg: <http://mykg.org/resource/>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX dbo: <http://dbpedia.org/ontology/>\nPREFIX ex: <http://example.org/>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n\nASK {\n  ?person a dbo:Person ;\n          dbo:birthYear ?birthYear ;\n          dbo:deathYear ?deathYear .\n}",
+    "passed": true,
+    "diagnosis": "",
+    "source": "generated_cq"
+  },
+  {
+    "cq": "What is the original title of a given film?",
+    "sparql": "PREFIX dbo: <http://dbpedia.org/ontology/>\nPREFIX ex: <http://example.org/>\nPREFIX mykg: <http://mykg.org/resource/>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n\nASK {\n  ?film a dbo:Film ;\n        dbo:originalTitle ?originalTitle .\n}",
+    "passed": true,
+    "diagnosis": "",
+    "source": "generated_cq"
+  },
+  {
+    "cq": "Which genres are associated with a specific film?",
+    "sparql": "PREFIX dbo: <http://dbpedia.org/ontology/>\nPREFIX ex: <http://example.org/>\nPREFIX mykg: <http://mykg.org/resource/>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n\nASK {\n  ?film a dbo:Film ;\n        dbo:genre ?genre .\n}",
+    "passed": true,
+    "diagnosis": "",
+    "source": "generated_cq"
+  },
+  {
+    "cq": "Are there any adult films in the dataset?",
+    "sparql": "PREFIX mykg: <http://mykg.org/resource/>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX dbo: <http://dbpedia.org/ontology/>\nPREFIX ex: <http://example.org/>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n\nASK {\n  ?film a dbo:Film ;\n        ex:isAdult true .\n}",
+    "passed": false,
+    "diagnosis": "ASK returned false. Missing: ?film a dbo:Film ;\n        ex:isAdult true .",
+    "source": "generated_cq"
+  },
+  {
+    "cq": "What is the primary name of a given person?",
+    "sparql": "PREFIX dbo: <http://dbpedia.org/ontology/>\nPREFIX ex: <http://example.org/>\nPREFIX mykg: <http://mykg.org/resource/>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n\nASK {\n  ?person a dbo:Person ;\n           dbo:name ?name .\n}",
+    "passed": true,
+    "diagnosis": "",
+    "source": "generated_cq"
+  },
+  {
+    "cq": "In which year was a specific film released?",
+    "sparql": "PREFIX dbo: <http://dbpedia.org/ontology/>\nPREFIX ex: <http://example.org/>\nPREFIX mykg: <http://mykg.org/resource/>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n\nASK {\n  ?film a dbo:Film ;\n        dbo:startYear ?year .\n}",
+    "passed": true,
+    "diagnosis": "",
+    "source": "generated_cq"
+  },
+  {
+    "cq": "Which persons have acted or directed in films?",
+    "sparql": "PREFIX dbo: <http://dbpedia.org/ontology/>\nPREFIX ex: <http://example.org/>\nPREFIX mykg: <http://mykg.org/resource/>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n\nASK {\n  ?person a dbo:Person ;\n          dbo:profession ?profession .\n  FILTER(?profession = \"actor\" || ?profession = \"director\")\n}",
+    "passed": true,
+    "diagnosis": "",
+    "source": "generated_cq"
+  }
+]
