@@ -132,8 +132,6 @@ Copy `.env.example` to `.env` and fill in your values. All variables are optiona
 |---|---|---|
 | `LLM_PROVIDER` | LLM backend — `lm_studio` or `comet` | `lm_studio` |
 | `LM_STUDIO_URL` | Base URL of your LM Studio server | `http://localhost:1234/v1` |
-| `COMET_API_KEY` | Comet API key (only when `LLM_PROVIDER=comet`) | — |
-| `COMET_MODEL` | Comet model name | `claude-opus-4-6` |
 | `LANGSMITH_API_KEY` | LangSmith tracing key (optional) | — |
 
 #### Model selection
@@ -251,31 +249,6 @@ When `--shacl` is passed, the pipeline generates SHACL shapes using a three-tier
 
 All tiers use `inference="none"` in pyshacl to prevent RDFS-inferred false positives (typed literals being flagged as IRI violations).
 
-### Deterministic violation repair (no LLM required)
-
-Before routing violations back to the LLM generator, the pipeline attempts two deterministic fixes:
-
-- **Pass A — prefix rewrite:** When an `owl:ObjectProperty` po entry already uses `~iri` but with a foreign ontology prefix (e.g. `dbo:Profession/$(col)~iri`), the prefix is rewritten to the subject base namespace (e.g. `example:Profession/$(col)~iri`). morph-kgc silently materialises foreign-namespace IRI templates as literals for plain-text columns; the base namespace is always handled correctly.
-- **Pass B — literal-to-IRI conversion:** When an `owl:ObjectProperty` is mapped to a literal column (e.g. `[dbo:profession, $(category), xsd:string]`), the entry is deterministically rewritten to an IRI template (e.g. `[dbo:profession, example:Profession/$(category)~iri]`). This avoids unnecessary LLM retries for a purely structural constraint.
-
-If the deterministic fix fully resolves the violation, the KG is re-materialised in-place and the pipeline continues without any retry.
-
-### Persistent violation detection
-
-Two safeguards prevent the LLM from over-engineering the mapping on SHACL retries:
-
-1. **Same-fingerprint check:** If the identical violation fingerprint (MD5 of violation set) recurs on consecutive attempts, the pipeline accepts the KG without further retries.
-2. **Superset check:** If the LLM adds new intermediate mappings or restructures the architecture — introducing *new* violations while the *original* ones are still present — the pipeline detects this as a regression and immediately accepts the KG, preventing runaway restructuring.
-
-The feedback sent back to the generator on the first retry includes an explicit guard:
-> *Do NOT add new intermediate mappings (e.g. CastMapping, RoleMapping). Do NOT create cast nodes or join nodes. ONLY fix the specific predicate(s) listed.*
-
-On violations, the structured violation report is fed back into the YARRRML generator for a targeted fix (capped at `SHACL_MAX_RETRIES`, default 2).
-
-SHACL shapes and the validation report are saved to the run directory (`shacl_shapes.ttl`, `shacl_report.txt`).
-
----
-
 ## Decentralised YARRRML Generation
 
 Previously, the entire YARRRML document was produced by a single monolithic agent. The architecture has been refactored into three specialised sub-agents:
@@ -294,34 +267,21 @@ Previously, the entire YARRRML document was produced by a single monolithic agen
 
 ## CQ Validation with SPARQL and Pyoxigraph
 
-Competency Questions (CQs) are validated as follows:
+### Why Competency Questions?
+
+A CSV schema alone does not determine a unique KG — the same columns can be mapped dozens of valid ways. Automap resolves this under-determination through **Competency Questions (CQs)**: natural-language questions that articulate what the KG *must be able to answer*. CQs serve a dual role:
+
+1. **Generative bias (pre-materialisation):** CQs are injected directly into the `EntityAgent` prompt as hard constraints — *"The mapping MUST produce a KG that can answer ALL of these Competency Questions"* — steering the generator toward the entity types, predicates, and join structures the intended use-case actually requires, before any triple is materialised.
+2. **Semantic validation target (post-materialisation):** CQs are translated to SPARQL `ASK` queries and executed against the real KG to verify that the bias was effective. Failures feed structured diagnostic context back to the YARRRML generator for targeted re-generation.
+
+When the user does not provide CQs (via `--cqs`), the `generate_cqs` node auto-generates them from the CSV schema and ontology, ensuring every pipeline run is guided and validated **semantically**, not just syntactically.
+
+### Validation flow
 
 1. CQs are generated automatically from the schema and ontology (or supplied by the user via `--cqs`).
 2. Each CQ is translated to a SPARQL `ASK` query by a dedicated LLM agent, grounded with actual classes and predicates probed from the materialised KG.
 3. Queries are executed against an **in-process [pyoxigraph](https://pyoxigraph.readthedocs.io/) store** — no external SPARQL endpoint, no localhost port, no credentials required.
 4. Failed CQs trigger structured feedback to the YARRRML generator, identifying which triple patterns are absent from the KG.
-
----
-
-## Output Structure
-
-Each run produces a timestamped directory under `data/output/`:
-
-```
-data/output/run_YYYYMMDD_HHMMSS/
-├── final_mapping.yaml        # Final YARRRML mapping
-├── knowledge_graph.nt        # Materialised KG (N-Triples)
-├── cqs.txt                   # Competency Questions used
-├── sparql_validation.txt     # CQ validation report (human-readable)
-├── sparql_validation.json    # CQ validation report (machine-readable)
-├── shacl_shapes.ttl          # SHACL shapes used (if --shacl)
-├── shacl_report.txt          # SHACL validation report (if --shacl)
-├── eval_metrics.json         # Evaluation metrics (if --eval)
-└── debug/
-    ├── attempt_1.yaml        # YARRRML attempt history
-    ├── attempt_2.yaml
-    └── ...
-```
 
 ---
 
@@ -341,14 +301,86 @@ The upstream dependency `morph-kgc` requires specific patches to support Python 
 
 ---
 
-## Project Structure
+## Repository Structure
 
-* **`agents/`**: Core LLM logic — Schema, Mapper, Schema Alignment, Prefix, Entity, Relationship, CQ Generator, CQ-to-SPARQL, Refiner, and YARRRML Coordinator agents.
-* **`graph/`**: LangGraph definitions (`workflow.py`) and all node execution logic (`nodes.py`), including SHACL and SPARQL validation nodes.
-* **`config/`**: LLM settings, structured output schemas, YARRRML examples, and ontology prefix registry.
-* **`data/`**: Input CSVs/Ontologies, checkpoint state definitions, and timestamped output run directories.
-* **`evaluation/`**: Multi-level evaluation framework (`metrics.py`, `run_experiment.py`, `analyze_results.py`).
-* **`scripts/`**: Critical patch scripts for upstream dependency fixes.
+```
+automap/
+├── main.py                          # Entry-point: CLI argument parsing, pipeline invocation,
+│                                    #   real-time stage streaming, evaluation dispatch
+│
+├── agents/                          # All LLM agent logic
+│   ├── schema_agent.py              #   Extracts column names, sample values, and inferred types from CSV
+│   ├── mapper_agent.py              #   Maps CSV columns → ontology classes/properties (semantic mapper)
+│   ├── schema_alignment_agent.py    #   Decides flat vs. multi-node structure; plans entity subjects
+│   ├── ontology_entity_planner.py   #   Intermediate entity plan used by the alignment agent
+│   ├── cq_generator_agent.py        #   Auto-generates Competency Questions from schema + ontology
+│   ├── cq_to_sparql_agent.py        #   Translates CQs → SPARQL ASK queries (grounded on live KG probe)
+│   ├── prefix_agent.py              #   Generates the YARRRML `prefixes:` block (runs in parallel)
+│   ├── entity_agent.py              #   Generates the `mappings:` block with data properties (runs in parallel)
+│   ├── relationship_agent.py        #   Adds object-property PO entries / cross-mapping joins (sequential)
+│   ├── yarrrml_coordinator.py       #   Orchestrates Prefix + Entity (parallel) → Relationship (sequential)
+│   └── refiner_agent.py             #   Structural logic checker: disconnected mappings, missing columns,
+│                                    #   wrong datatypes, phantom mappings; auto-fixes where possible
+│
+├── graph/                           # LangGraph workflow definitions
+│   ├── workflow.py                  #   StateGraph topology: node wiring + all routing functions
+│   │                                #   (retry caps read from RETRY_* env vars via config/settings.py)
+│   └── nodes.py                     #   All node implementations: schema, ontology, mapper, alignment,
+│                                    #   CQ generation, YARRRML generation, syntax validation, logic
+│                                    #   refinement, KG generation, SHACL validation, SPARQL CQ validation
+│
+├── config/                          # Shared configuration
+│   ├── settings.py                  #   LLM factory (get_llm / get_llm_with_retry), per-role model &
+│   │                                #   temperature resolution, retry limit constants (RETRY_*_MAX)
+│   ├── structured_output.py         #   Pydantic schemas for structured LLM outputs (MappingsOutput, etc.)
+│   ├── yarrrml_examples.py          #   Few-shot YARRRML examples injected into agent prompts
+│   └── prefixes.py                  #   Curated ontology prefix registry (dbo, schema, foaf, …)
+│
+├── data/                            # Data layer
+│   ├── checkpoints.py               #   AgentState TypedDict: all pipeline state fields
+│   ├── input/                       #   Input datasets (CSV files + Turtle ontologies)
+│   │   └── <dataset>/
+│   │       ├── data.csv
+│   │       └── ontology.ttl
+│   ├── gold/                        #   Gold-standard KGs for Level 2 evaluation (N-Triples)
+│   └── output/                      #   Timestamped run directories (auto-created)
+│       └── run_YYYYMMDD_HHMMSS/
+│           ├── final_mapping.yaml   #     Final accepted YARRRML mapping
+│           ├── knowledge_graph.nt   #     Materialised KG (N-Triples)
+│           ├── cqs.txt              #     Competency Questions used in this run
+│           ├── sparql_validation.txt#     CQ validation report (human-readable)
+│           ├── sparql_validation.json#    CQ validation report (machine-readable)
+│           ├── shacl_shapes.ttl     #     SHACL shapes used (only when --shacl)
+│           ├── shacl_report.txt     #     SHACL validation report (only when --shacl)
+│           ├── eval_metrics.json    #     Evaluation metrics (only when --eval)
+│           └── debug/               #     Per-attempt YARRRML snapshots (attempt_1.yaml, …)
+│
+├── evaluation/                      # Multi-level post-run evaluation framework
+│   ├── metrics.py                   #   Computes L1–L4 metrics (triple match, F1, column coverage, CQ %)
+│   ├── run_experiment.py            #   Batch experiment runner (multiple CSV inputs, aggregated results)
+│   ├── analyze_results.py           #   Aggregates and prints experiment result tables
+│   └── setup_gold.sh                #   Helper script to prepare gold KG files
+│
+├── validation_hofer-et-al/          # Reproducibility benchmark (Hofer et al. comparison)
+│   ├── compare_my_pipeline.py       #   Side-by-side F1 comparison against the GPT-4 reference pipeline
+│   ├── REPRODUCIBILITY.md           #   Step-by-step reproduction guide + expected output
+│   └── target/                      #   Comparison output artefacts (comparison_results.json)
+│
+├── tools/                           # Developer utilities (not part of the core pipeline)
+│   ├── rml_tools.py                 #   Helpers for RML/YARRRML inspection and debugging
+│
+├── scripts/
+│   └── patch_morph_kgc.sh           # Applies Python 3.12 / Pandas 2.0 / NumPy 2.0 compatibility
+│                                    #   patches to the morph-kgc site-packages (Linux only)
+│
+├── Dockerfile                       # Multi-stage Docker image (Python 3.12, patches applied at build)
+├── docker-compose.yml               # Compose file — mounts ./data, passes .env, forwards CLI args
+├── pyproject.toml                   # Project metadata and uv/pip dependencies
+├── uv.lock                          # Locked dependency manifest (uv)
+├── langgraph.json                   # LangGraph Studio configuration
+├── .env.example                     # Environment variable template (copy to .env)
+└── .gitignore
+```
 
 ---
 
@@ -377,7 +409,7 @@ If you use this tool in an academic context, please cite:
 
 This work has received funding from the **PIONERA** project (*Enhancing interoperability in data spaces through artificial intelligence*), a project funded in the context of the call for Technological Products and Services for Data Spaces of the **Ministry for Digital Transformation and Public Administration** within the framework of the **PRTR** funded by the **European Union (NextGenerationEU)**.
 
-<img width="1961" height="169" alt="image" src="https://github.com/user-attachments/assets/941a0db1-547f-48d0-b627-904098d607c9" />
+<img width="1961" height="169" alt="image" src="https://github.com/user-attachments/assets/75442c2f-fe94-4247-88fd-2566cdae867b" />
 
 ## Contributors
 
