@@ -1,0 +1,11 @@
+movie_id,primaryTitle,originalTitle,startYear,runtimeMinutes,genres,isAdult,titleType,person_id,primaryName,category,ordering,birthYear,deathYear
+tt0167423,Diamonds,Diamonds,1999,91,"Comedy, Mystery",0,movie,nm0000018,Kirk Douglas,actor,1,1916,2020
+tt0167423,Diamonds,Diamonds,1999,91,"Comedy, Mystery",0,movie,nm0000002,Lauren Bacall,actress,2,1924,2014
+tt0167423,Diamonds,Diamonds,1999,91,"Comedy, Mystery",0,movie,nm0000101,Dan Aykroyd,actor,3,1952,
+tt0167423,Diamonds,Diamonds,1999,91,"Comedy, Mystery",0,movie,nm0021607,Corbin Allred,actor,4,1979,
+tt0167423,Diamonds,Diamonds,1999,91,"Comedy, Mystery",0,movie,nm0038875,John Asher,director,5,1971,
+tt0167423,Diamonds,Diamonds,1999,91,"Comedy, Mystery",0,movie,nm0441631,Allan Aaron Katz,writer,6,,
+tt0167423,Diamonds,Diamonds,1999,91,"Comedy, Mystery",0,movie,nm4500812,Patricia Green,producer,7,,
+tt0167423,Diamonds,Diamonds,1999,91,"Comedy, Mystery",0,movie,nm0006107,Joel Goldsmith,composer,8,1957,2012
+tt0167423,Diamonds,Diamonds,1999,91,"Comedy, Mystery",0,movie,nm0254580,Paul Elliott,cinematographer,9,,
+tt0167423,Diamonds,Diamonds,1999,91,"Comedy, Mystery",0,movie,nm0002706,David L. Bertman,editor,10,,

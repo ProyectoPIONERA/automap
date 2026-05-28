@@ -188,6 +188,8 @@ def main():
         "run_dir": run_directory,
         "predicate_conflict_cols": [],
         "shacl_enabled": args.shacl,
+        "shacl_retry_count": 0,
+        "shacl_violation_fingerprint": "",
     }
 
     config = {"configurable": {"thread_id": str(uuid.uuid4())}}

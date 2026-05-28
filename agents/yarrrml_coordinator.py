@@ -298,9 +298,6 @@ def _apply_base_uri_to_subjects(yarrrml_str: str, base_uri: str) -> tuple[str, l
 
         # Don't rewrite if already using the target prefix
         if old_prefix == prefix_name:
-            # Same prefix name but the URI might still be wrong (e.g. LLM used
-            # mykg: http://example.org/mykg# but user wants http://mykg.org/resource/).
-            # Always overwrite the prefix URI — don't skip.
             pass
         else:
             new_subj = f"{prefix_name}:{rest}"
@@ -308,6 +305,56 @@ def _apply_base_uri_to_subjects(yarrrml_str: str, base_uri: str) -> tuple[str, l
             changes.append(
                 f"[BaseURI] {mname}: s: {subj!r} → {new_subj!r}"
             )
+
+    # ── Pass B: rewrite IRI template objects in po: entries ──────────
+    # e.g. [dbo:starring, dbo:Person/$(person_id)~iri]
+    #   →  [dbo:starring, mykg:Person/$(person_id)~iri]
+    # Only rewrite templates whose ClassName already exists as the class
+    # of a mapping subject (i.e. it's a self-namespace entity, not an
+    # external ontology resource).  Fully dataset-agnostic.
+    known_classes: set[str] = set()
+    for _mdef in data["mappings"].values():
+        if not isinstance(_mdef, dict):
+            continue
+        _s = str(_mdef.get("s", ""))
+        _sm = _SUBJ_RE.match(_s)
+        if _sm:
+            # class name is everything up to the first /$(
+            _cls = _sm.group(2).split("/$(")[0].split("_$(")[0]
+            known_classes.add(_cls)
+
+    def _rewrite_po_iri_templates(po_list, mapping_name: str) -> None:
+        """Recursively rewrite IRI template objects inside po entries."""
+        if not isinstance(po_list, list):
+            return
+        for idx, entry in enumerate(po_list):
+            if isinstance(entry, list) and len(entry) >= 2:
+                obj = entry[1]
+                if isinstance(obj, str):
+                    # Match: somePrefix:ClassName/$(col)~iri
+                    _om = re.match(
+                        r'^([a-zA-Z][a-zA-Z0-9_]*):(([A-Z][A-Za-z0-9_]*)(/.+~iri))$',
+                        obj.strip(),
+                    )
+                    if _om:
+                        pfx = _om.group(1)
+                        cls_path = _om.group(2)     # e.g. Person/$(person_id)~iri
+                        cls_name = _om.group(3)     # e.g. Person
+                        if pfx != prefix_name and cls_name in known_classes:
+                            new_obj = f"{prefix_name}:{cls_path}"
+                            entry[1] = new_obj
+                            changes.append(
+                                f"[BaseURI-po] {mapping_name}: "
+                                f"IRI template '{obj}' → '{new_obj}'"
+                            )
+            elif isinstance(entry, list):
+                _rewrite_po_iri_templates(entry, mapping_name)
+
+    for mname, mdef in data["mappings"].items():
+        if not isinstance(mdef, dict):
+            continue
+        po = mdef.get("po", [])
+        _rewrite_po_iri_templates(po, mname)
 
     # Always re-serialise when the prefix URI was updated (even if no subjects
     # needed renaming), so the YAML reflects the corrected URI.
@@ -497,7 +544,7 @@ def coordinate_yarrrml_generation(state: dict) -> dict:
     # (e.g. metformin-pioglitazone → metformin_pioglitazone).
     # This causes Morph-KGC to fail with "column not found".
     # Restore them deterministically using the actual CSV headers.
-    from agents.refiner_agent import build_column_alias_map, restore_column_names, _fix_predicate_separator_typo, _fix_yaml_breaking_predicates
+    from agents.refiner_agent import build_column_alias_map, restore_column_names, _fix_predicate_separator_typo, _fix_yaml_breaking_predicates, _fix_unprefixed_predicates
     try:
         import pandas as _pd
         _df_headers = _pd.read_csv(csv_path, nrows=0)
@@ -526,6 +573,16 @@ def coordinate_yarrrml_generation(state: dict) -> dict:
     _coord_pfx.update({"rdf", "rdfs", "xsd", "owl"})
     final_yarrrml, _sep_fixes = _fix_predicate_separator_typo(final_yarrrml, _coord_pfx)
     for _fix in _sep_fixes:
+        print(f"    [Coordinator] {_fix}")
+
+    # ── Fix unprefixed predicates: isAdult → ex:isAdult ─────────
+    try:
+        import yaml as _yaml3
+        _coord_data2 = _yaml3.safe_load(final_yarrrml)
+    except Exception:
+        _coord_data2 = {}
+    final_yarrrml, _unpfx_fixes = _fix_unprefixed_predicates(final_yarrrml, _coord_data2 or {})
+    for _fix in _unpfx_fixes:
         print(f"    [Coordinator] {_fix}")
 
     # ── Step 9: Enforce user's base URI on all subject templates ─────────

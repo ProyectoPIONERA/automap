@@ -342,17 +342,27 @@ def _check_islands(mappings: dict) -> list[str]:
         return errors
 
     # ── Single-source guard ──────────────────────────────────────────
-    # When all mappings share exactly one CSV source, a fan-out topology
-    # (one CSV → multiple class mappings) is architecturally valid even
-    # when cross-links use different namespace prefixes (e.g. mykg: vs dbo:).
+    # When all mappings share exactly one underlying CSV, a fan-out topology
+    # (one CSV → multiple class mappings) is architecturally valid even when
+    # cross-links use different namespace prefixes (e.g. mykg: vs dbo:).
     # Flagging these as DISCONNECTED causes an infinite retry loop.
+    #
+    # Normalise source strings before comparing: strip the ~csv / ~tsv
+    # format suffix, collapse absolute vs. relative paths to basename, and
+    # lower-case — so  data/input/file.csv~csv  and  /abs/path/file.csv
+    # are treated as the same source.
+    def _norm_source(s: str) -> str:
+        import os as _os
+        s = re.sub(r'~\w+$', '', s)   # strip ~csv, ~tsv, ~json, etc.
+        return _os.path.basename(s).lower()
+
     all_sources: set[str] = set()
     for mdef in valid_mappings.values():
         for src in (mdef.get("sources") or []):
             if isinstance(src, list) and src:
-                all_sources.add(str(src[0]))
+                all_sources.add(_norm_source(str(src[0])))
             elif isinstance(src, str):
-                all_sources.add(src)
+                all_sources.add(_norm_source(src))
     if len(all_sources) <= 1:
         return errors  # single-source fan-out — island check not meaningful
 
@@ -1040,6 +1050,70 @@ def _fix_predicate_separator_typo(
             result_parts.append(seg)
 
     return ''.join(result_parts), fixes
+
+
+def _fix_unprefixed_predicates(
+    yarrrml_str: str,
+    data: dict,
+) -> tuple[str, list[str]]:
+    """Fix predicates that have no namespace prefix/URI, causing morph-kgc to
+    assign them rr:Literal termtype instead of rr:IRI.
+
+    A predicate is "unprefixed" when it is a plain word (e.g. ``isAdult``,
+    ``titleType``) with no ``:`` separator and is not one of the reserved
+    shorthand values ``a`` / ``rdf:type``.
+
+    Strategy (fully data-agnostic):
+      1. Collect the first non-structural declared prefix (prefers ``ex``,
+         then any other user-declared prefix, then falls back to ``ex``).
+      2. For every flow-list PO entry whose first element is an unprefixed
+         bare word, prepend ``<chosen_prefix>:``.
+
+    Returns ``(fixed_yarrrml, list_of_fix_descriptions)``.
+    """
+    if not yarrrml_str:
+        return yarrrml_str, []
+
+    # Choose the best prefix to use for auto-qualification
+    declared_prefixes: dict[str, str] = data.get("prefixes", {}) if data else {}
+    _SKIP = {"rdf", "rdfs", "owl", "xsd"}
+    chosen_prefix = "ex"
+    if "ex" in declared_prefixes:
+        chosen_prefix = "ex"
+    else:
+        for pfx in declared_prefixes:
+            if pfx not in _SKIP:
+                chosen_prefix = pfx
+                break
+
+    fixes: list[str] = []
+    lines = yarrrml_str.split("\n")
+    result: list[str] = []
+
+    for line in lines:
+        # Match flow-list PO entries: - [predicate, ...]
+        # The predicate is the first element before the first comma
+        m = re.match(r'^(\s*-\s*\[)([^\[,\]]+)(,.+)$', line)
+        if m:
+            indent_bracket = m.group(1)
+            predicate = m.group(2).strip()
+            rest = m.group(3)
+            # Unprefixed: no colon, not 'a', not a full URI (<...>), not a number
+            if (
+                ":" not in predicate
+                and predicate not in ("a",)
+                and not predicate.startswith("<")
+                and not predicate.startswith('"')
+                and re.match(r'^[A-Za-z_][A-Za-z0-9_]*$', predicate)
+            ):
+                new_pred = f"{chosen_prefix}:{predicate}"
+                fixes.append(
+                    f"Auto-prefixed unprefixed predicate '{predicate}' → '{new_pred}'"
+                )
+                line = f"{indent_bracket}{new_pred}{rest}"
+        result.append(line)
+
+    return "\n".join(result), fixes
 
 
 def _fix_yaml_breaking_predicates(yarrrml_str: str) -> tuple[str, list[str]]:
@@ -1842,6 +1916,18 @@ def call_refiner_llm(state: AgentState) -> dict:
                     print(f"    [FIX] {fix}")
                 yarrrml = sep_fixed
                 data = sep_data
+                if isinstance(data.get("mappings"), dict):
+                    mappings = data["mappings"]
+
+        # ── Fix unprefixed predicates: isAdult → ex:isAdult ───────
+        unpfx_fixed, unpfx_fixes = _fix_unprefixed_predicates(yarrrml, data)
+        if unpfx_fixes:
+            unpfx_data = _parse_yarrrml(unpfx_fixed)
+            if unpfx_data:
+                for fix in unpfx_fixes:
+                    print(f"    [FIX] {fix}")
+                yarrrml = unpfx_fixed
+                data = unpfx_data
                 if isinstance(data.get("mappings"), dict):
                     mappings = data["mappings"]
 

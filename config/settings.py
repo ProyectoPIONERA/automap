@@ -45,6 +45,34 @@ DEFAULT_TEMPERATURES = {
     "refiner": 0.2,
 }
 
+# ── Retry limits ─────────────────────────────────────────────────────────────
+# Each cap controls how many times the pipeline will loop back to the
+# YARRRML generator for a specific failure class before giving up.
+# All values can be overridden via .env without touching the code.
+#
+#   RETRY_SYNTAX_MAX   – re-try after a YARRRML syntax error          (default 10)
+#   RETRY_LOGIC_MAX    – re-try after a logic/structural error         (default  6)
+#   RETRY_SHACL_MAX    – re-try after a SHACL constraint violation     (default  3)
+#   RETRY_CQ_MAX       – re-try after SPARQL CQ failures              (default  3)
+#
+# Rule of thumb:
+#   • small/simple datasets  → lower values (e.g. 3 / 3 / 2 / 2) to save time
+#   • complex/large datasets → higher values (up to 15 / 10 / 5 / 5)
+# ---------------------------------------------------------------------------
+
+def _int_env(var: str, default: int) -> int:
+    """Read an integer env var with a fallback default."""
+    try:
+        return int(os.getenv(var, str(default)))
+    except (ValueError, TypeError):
+        return default
+
+
+RETRY_SYNTAX_MAX = _int_env("RETRY_SYNTAX_MAX", 10)
+RETRY_LOGIC_MAX  = _int_env("RETRY_LOGIC_MAX",   6)
+RETRY_SHACL_MAX  = _int_env("RETRY_SHACL_MAX",   3)
+RETRY_CQ_MAX     = _int_env("RETRY_CQ_MAX",       3)
+
 # Per-role timeout defaults (seconds).  Capped at 280s to stay under
 # LM Studio's hard 300s server-side timeout.  Override globally with
 # the LLM_TIMEOUT env var.

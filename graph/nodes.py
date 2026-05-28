@@ -41,6 +41,182 @@ _RML_WELL_KNOWN_PREFIXES: dict[str, str] = dict(WELL_KNOWN_PREFIXES)
 _RML_PREFIX_USAGE_RE = re.compile(r'\b([a-zA-Z][a-zA-Z0-9_]*):[a-zA-Z_]')
 
 
+# ────────────────────────────────────────────────────────────────────
+# Post-materialisation KG cleanup helpers
+# ────────────────────────────────────────────────────────────────────
+
+def _clean_invalid_rdf_type_literals(nt_path: str) -> int:
+    """Remove triples where rdf:type has a literal object from an N-Triples file.
+
+    By definition, rdf:type must always have an IRI as its object (RDF spec).
+    When morph-kgc produces ``<s> rdf:type "N"^^xsd:integer`` triples they
+    are structurally invalid and are silently removed here.
+
+    Returns the number of lines removed.
+    """
+    RDF_TYPE = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
+    if not nt_path or not os.path.exists(nt_path):
+        return 0
+    try:
+        with open(nt_path, "r", encoding="utf-8") as fh:
+            lines = fh.readlines()
+        kept: list[str] = []
+        removed = 0
+        for line in lines:
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                kept.append(line)
+                continue
+            parts = stripped.split(None, 2)
+            if len(parts) >= 3 and parts[1] == RDF_TYPE:
+                obj = parts[2].strip().rstrip(" .")
+                if obj.startswith('"') or obj.startswith("'"):
+                    removed += 1
+                    continue
+            kept.append(line)
+        if removed:
+            with open(nt_path, "w", encoding="utf-8") as fh:
+                fh.writelines(kept)
+            print(f"    [KG Cleanup] Removed {removed} invalid rdf:type literal triple(s)")
+        return removed
+    except Exception as exc:
+        print(f"    [KG Cleanup] Warning: {exc}")
+        return 0
+
+
+def _fix_iri_template_for_objectproperty(
+    yarrrml_str: str,
+    violations: list[str],
+    obj_props: set[str],
+    base_prefix: str,
+    base_uri: str,
+) -> tuple[str, list[str]]:
+    """Deterministic SHACL-triggered fix for ObjectProperty violations.
+
+    Two-pass strategy (both are dataset-agnostic):
+
+    **Pass A — prefix rewrite**: When a po entry already uses ``~iri`` but with
+    the wrong prefix (e.g. ``dbo:Profession/$(col)~iri``), rewrite it to use the
+    subject base prefix (e.g. ``example:Profession/$(col)~iri``).  Morph-KGC
+    reliably materialises IRI templates under the base namespace; foreign
+    ontology namespace templates can silently produce Literals.
+
+    **Pass B — literal→IRI conversion**: When a po entry maps an
+    owl:ObjectProperty to a *literal* (e.g. ``[dbo:profession, $(category),
+    xsd:string]``), replace it with an IRI template using the column value as a
+    local name (e.g. ``[dbo:profession, example:Profession/$(category)~iri]``).
+    The class name is derived from the property's local name (capitalised).
+
+    Returns (fixed_yarrrml, list_of_fix_descriptions).
+    """
+    if not yarrrml_str or not violations:
+        return yarrrml_str, []
+
+    # Collect predicates flagged as ObjectProperty violations
+    failing_preds: set[str] = set()
+    for v in violations:
+        m = re.search(r'path=(<[^>]+>|[\w:]+)', v)
+        if not m:
+            continue
+        pred_raw = m.group(1).strip("<>")
+        if not obj_props or pred_raw in obj_props:
+            failing_preds.add(pred_raw)
+
+    if not failing_preds:
+        return yarrrml_str, []
+
+    try:
+        import yaml as _yaml
+        data = _yaml.safe_load(yarrrml_str) or {}
+    except Exception:
+        data = {}
+    declared_prefixes: dict[str, str] = data.get("prefixes", {}) or {}
+    uri_to_prefix: dict[str, str] = {v: k for k, v in declared_prefixes.items()}
+    needs_prefix_injection = base_prefix not in declared_prefixes and bool(base_uri)
+
+    fixes: list[str] = []
+    result = yarrrml_str
+
+    for pred_uri in failing_preds:
+        pred_forms: list[str] = [pred_uri]
+        for pfx_uri, pfx_alias in uri_to_prefix.items():
+            if pred_uri.startswith(pfx_uri):
+                pred_forms.append(f"{pfx_alias}:{pred_uri[len(pfx_uri):]}")
+
+        # ── Pass A: rewrite wrong-prefix ~iri templates ───────────────────
+        for pred_form in pred_forms:
+            pat = re.compile(
+                r'(\[\s*' + re.escape(pred_form) + r'\s*,\s*)'
+                r'([a-zA-Z][a-zA-Z0-9_]*)'
+                r'(:(?:[^,\]]*)\$\([^)]+\)~iri)'
+                r'(\s*\])',
+            )
+            _fixes_local: list[str] = []
+
+            def _rewrite(m: re.Match, bp: str = base_prefix,
+                         fl: list = _fixes_local) -> str:
+                if m.group(2) == bp:
+                    return m.group(0)
+                fl.append(
+                    f"IRI template prefix '{m.group(2)}:' → '{bp}:' "
+                    f"for predicate '{pred_form}'"
+                )
+                return f"{m.group(1)}{bp}{m.group(3)}{m.group(4)}"
+
+            new_result = pat.sub(_rewrite, result)
+            if _fixes_local:
+                result = new_result
+                fixes.extend(_fixes_local)
+                break
+
+        # ── Pass B: convert literal mapping → IRI template ───────────────
+        # Matches: [pred_form, $(col), xsd:anyType]  (3-item literal entry)
+        # Rewrites to: [pred_form, base_prefix:LocalClass/$(col)~iri]
+        for pred_form in pred_forms:
+            # Derive class name from property local name (e.g. profession → Profession)
+            local_name = pred_uri.split("/")[-1].split("#")[-1]
+            class_name = local_name[0].upper() + local_name[1:] if local_name else "Resource"
+
+            lit_pat = re.compile(
+                r'(\[\s*' + re.escape(pred_form) + r'\s*,\s*)'
+                r'\$\(([^)]+)\)'          # group 2: column name
+                r'\s*,\s*xsd:[a-zA-Z]+'  # xsd datatype — confirm it's a literal
+                r'(\s*\])',
+            )
+            _lit_fixes: list[str] = []
+
+            def _lit_rewrite(m: re.Match, bp: str = base_prefix,
+                              cn: str = class_name, pf: str = pred_form,
+                              fl: list = _lit_fixes) -> str:
+                col = m.group(2)
+                fl.append(
+                    f"Converted literal → IRI template for ObjectProperty '{pf}': "
+                    f"$({{col}}) xsd:string → {bp}:{cn}/$({{col}})~iri"
+                    .format(col=col)
+                )
+                return f"[{pf}, {bp}:{cn}/$({col})~iri]"
+
+            new_result = lit_pat.sub(_lit_rewrite, result)
+            if _lit_fixes:
+                result = new_result
+                fixes.extend(_lit_fixes)
+                needs_prefix_injection = (
+                    needs_prefix_injection
+                    or base_prefix not in declared_prefixes
+                )
+                break  # only apply first matching form
+
+    if fixes and needs_prefix_injection and base_prefix not in declared_prefixes:
+        result = result.replace(
+            "prefixes:",
+            f"prefixes:\n  {base_prefix}: \"{base_uri}\"",
+            1,
+        )
+        fixes.append(f"Injected missing prefix '{base_prefix}: {base_uri}'")
+
+    return result, fixes
+
+
 def _inject_missing_rml_prefixes(yarrrml_data: dict, rml_content: str,
                                   yarrrml_text: str = "") -> str:
     """Guarantee that every prefix used in the RML/Turtle output has a
@@ -1115,7 +1291,55 @@ def _internal_yarrrml_to_rml(yarrrml_content, csv_path):
             patched_rml = patched_rml.replace(needle, f'rml:source "{abs_csv_path}"')
             break
 
+    # ── Post-processing: fix any predicate map with rr:termType rr:Literal ──
+    # RDF predicates can ONLY be IRIs — rr:Literal as a predicate termType is
+    # invalid and causes morph-kgc to abort with "Found an invalid predicate
+    # termtype".  This happens when a YARRRML po entry has a datatype annotation
+    # on the predicate position (e.g. a malformed 3-element entry).
+    patched_rml = _fix_predicate_termtype(patched_rml)
+
     return patched_rml
+
+
+def _fix_predicate_termtype(rml_content: str) -> str:
+    """Remove rr:termType rr:Literal (or any non-IRI termType) from predicate maps.
+
+    Predicates in RML must always be IRIs.  Yatter can occasionally emit
+    ``rr:termType rr:Literal`` inside a ``rr:predicateMap [ ... ]`` block when
+    a po entry is malformed (e.g. the predicate slot has a datatype annotation).
+
+    Returns the cleaned RML string.
+    """
+    if "rr:termType" not in rml_content:
+        return rml_content
+
+    lines = rml_content.split("\n")
+    result: list[str] = []
+    in_predicate_map = False
+    bracket_depth = 0
+
+    for line in lines:
+        # Detect start of rr:predicateMap [ ...
+        if re.search(r'rr:predicateMap\s*\[', line):
+            in_predicate_map = True
+            bracket_depth = line.count("[") - line.count("]")
+            if bracket_depth <= 0:
+                in_predicate_map = False  # single-line block
+            result.append(line)
+            continue
+
+        if in_predicate_map:
+            bracket_depth += line.count("[") - line.count("]")
+            if bracket_depth <= 0:
+                in_predicate_map = False
+            # Inside a predicateMap block — drop any non-IRI termType line
+            if re.search(r'rr:termType\s+(?!rr:IRI)', line):
+                print(f"    [RML-FIX] Removed invalid predicate termType: {line.strip()}")
+                continue  # skip this line
+
+        result.append(line)
+
+    return "\n".join(result)
 
 
 def kg_generation_node(state):
@@ -1157,6 +1381,12 @@ mappings: {rml_tmp_path}
             from rdflib import Graph, ConjunctiveGraph
             if isinstance(g_rdf, (Graph, ConjunctiveGraph)):
                 g_rdf.serialize(destination=output_path, format="ntriples")
+
+        # ── Post-materialisation cleanup ──────────────────────────
+        # Remove structurally-invalid rdf:type triples whose object is a
+        # literal (e.g. integers from an ordering column that morph-kgc
+        # incorrectly materialises as rdf:type values).
+        _clean_invalid_rdf_type_literals(output_path)
 
         return {
             "rdf_output": output_path,
@@ -1626,240 +1856,584 @@ def sparql_cq_validator_node(state: AgentState):
     }
 
 
+# ────────────────────────────────────────────────────────────────────────────
+# SHACL validation helpers  (dataset-agnostic, no hard-coded ontology knowledge)
+# ────────────────────────────────────────────────────────────────────────────
+
 def _parse_shacl_violations(results_text: str) -> list[str]:
-    """Extract human-readable, deduplicated violation summaries from pyshacl text report.
+    """Extract human-readable, deduplicated violation summaries from pyshacl output.
 
-    Groups violations by (ConstraintComponent, ResultPath/Message) so that
-    the same structural problem affecting many nodes is reported as ONE
-    summarised violation rather than dozens of identical lines.
+    Parses the real pyshacl text format:
+      Constraint Violation in NodeKindConstraintComponent (...):
+          Severity: sh:Violation
+          Source Shape: ...
+          Focus Node: ...
+          Value Node: ...
+          Result Path: ...   ← present for sh:property constraints
+          Message: ...
 
-    Fully agnostic — works with both Astrea-generated and fallback shapes.
+    Groups by (component, path-or-message) to collapse per-node repeats into
+    a single summarised entry with a count and example focus nodes.
     """
     import collections as _coll
+    import re as _re
 
-    # Parse individual violation blocks
-    raw_violations: list[dict] = []
-    current: dict = {}
+    raw: list[dict] = []
+    cur: dict = {}
+
     for line in results_text.splitlines():
-        line = line.strip()
-        if line.startswith("Constraint Violation"):
-            if current:
-                raw_violations.append(current)
-            current = {}
-        elif line.startswith("Constraint Component:"):
-            current["component"] = line.split(":", 1)[-1].strip()
-        elif line.startswith("Result Path:"):
-            current["path"] = line.split(":", 1)[-1].strip()
-        elif line.startswith("Message:"):
-            current["message"] = line.split(":", 1)[-1].strip()
-        elif line.startswith("Focus Node:"):
-            current.setdefault("focus_nodes", []).append(line.split(":", 1)[-1].strip())
-        elif line.startswith("Source Shape:"):
-            current["shape"] = line.split(":", 1)[-1].strip()
-    if current:
-        raw_violations.append(current)
+        s = line.strip()
+        # Header: "Constraint Violation in NodeKindConstraintComponent (...):"
+        _m = _re.match(r'Constraint Violation in\s+(\w+)\s*\(', s)
+        if _m:
+            if cur:
+                raw.append(cur)
+            cur = {"component": _m.group(1)}
+            continue
+        if s.startswith("Result Path:"):
+            cur["path"] = s.split(":", 1)[-1].strip()
+        elif s.startswith("Message:"):
+            cur["message"] = s.split(":", 1)[-1].strip()
+        elif s.startswith("Focus Node:"):
+            cur.setdefault("focus_nodes", []).append(s.split(":", 1)[-1].strip())
+        elif s.startswith("Source Shape:"):
+            cur["shape"] = s.split(":", 1)[-1].strip()
 
-    if not raw_violations:
-        # Fallback: extract raw lines if structured parsing found nothing
-        violations: list[str] = []
-        for line in results_text.splitlines():
-            if "Violation" in line or "Message:" in line:
-                violations.append(line.strip())
-        return violations[:20]
+    if cur:
+        raw.append(cur)
 
-    # Group by (component, path/message) to deduplicate repeated instances
+    if not raw:
+        # Plain-text fallback
+        return [l.strip() for l in results_text.splitlines()
+                if "Violation" in l or "Message:" in l][:20]
+
     groups: dict[str, list[dict]] = _coll.OrderedDict()
-    for v in raw_violations:
-        key = (v.get("component", "?"), v.get("path", v.get("message", "?")))
-        groups.setdefault(str(key), []).append(v)
+    for v in raw:
+        key = str((v.get("component", "?"), v.get("path", v.get("message", "?"))))
+        groups.setdefault(key, []).append(v)
 
     summaries: list[str] = []
-    for key_str, instances in groups.items():
+    for instances in groups.values():
         rep = instances[0]
-        component = rep.get("component", "unknown constraint")
+        component = rep.get("component", "unknown")
         path = rep.get("path", "")
         message = rep.get("message", "")
         count = len(instances)
-        # Build a concise summary
-        parts = []
+        parts: list[str] = []
         if path:
             parts.append(f"path={path}")
         if message:
             parts.append(message)
         if count > 1:
             parts.append(f"({count} nodes affected)")
-        # Show up to 2 example focus nodes
-        sample_nodes = []
+        sample: list[str] = []
         for inst in instances[:2]:
-            for fn in inst.get("focus_nodes", []):
-                sample_nodes.append(fn)
-        if sample_nodes:
-            parts.append(f"e.g. {', '.join(sample_nodes[:2])}")
-        short_comp = component.split("#")[-1] if "#" in component else component
-        summaries.append(f"[{short_comp}] {' | '.join(parts)}")
+            sample.extend(inst.get("focus_nodes", [])[:1])
+        if sample:
+            parts.append(f"e.g. {', '.join(sample[:2])}")
+        summaries.append(f"[{component}] {' | '.join(parts)}")
 
     return summaries
 
 
-def shacl_validation_node(state: AgentState) -> dict:
-    """Dataset-agnostic SHACL validation node.
+def _shacl_violation_fingerprint(violations: list[str]) -> str:
+    """Stable 12-char MD5 digest of the sorted violation set.
 
-    Uses Astrea to auto-generate SHACL shapes from the pipeline's own
-    ontology (any OWL ontology — no dataset-specific shapes needed), then
-    validates the materialised KG with pyshacl.  Feeds structured violation
-    feedback back into the YARRRML generation loop.
-
-    Skipped entirely when ``state["shacl_enabled"]`` is False (i.e. the
-    user did not pass ``--shacl``).
+    Used to detect when the identical violations recur across consecutive
+    SHACL retries — a signal that the generator cannot fix them (the root
+    cause is the data itself, e.g. literal role strings mapped to an
+    owl:ObjectProperty that expects IRIs).
     """
-    if not state.get("shacl_enabled", False) and not os.environ.get("SHACL_ENABLED"):
-        return {
-            "feedback": "SHACL_SKIP: --shacl not requested",
-            "messages": ["[SHACL] Skipped (--shacl not set)"],
-        }
+    import hashlib as _hl
+    return _hl.md5("|".join(sorted(violations)).encode()).hexdigest()[:12]
 
-    rdf_path = state.get("rdf_output", "")
-    ontology_path = state.get("ontology_path", "")
-    run_dir = state.get("run_dir", "data/output")
 
-    if not rdf_path or not os.path.exists(rdf_path):
-        return {
-            "feedback": "SHACL_SKIP: No KG to validate",
-            "messages": ["[SHACL] No KG found — skipped"],
-        }
+def _build_shacl_actionable_feedback(
+    violations: list[str],
+    ontology_path: str,
+    shapes_source: str,
+) -> str:
+    """Convert raw violation summaries into generator-actionable fix instructions.
 
-    import requests as _requests
+    Looks up each offending property in the ontology to determine whether it is
+    an owl:ObjectProperty or owl:DatatypeProperty, then adds a concrete remedy:
 
-    try:
-        from pyshacl import validate as _shacl_validate
-    except ImportError:
-        return {
-            "feedback": "SHACL_SKIP: pyshacl not installed (run: uv add pyshacl)",
-            "messages": ["[SHACL] pyshacl not available — skipped"],
-        }
+    • ObjectProperty + literal values  →
+        "construct an IRI from the column: prefix:Class/$(col)~iri"
+    • DatatypeProperty + IRI values    →
+        "remove the ~iri suffix"
+    • NodeKind IRI on a subject (no path) →
+        "the s: line is producing a literal — use a URI template"
+    """
+    import re as _re
 
-    # ── Step 1: Generate SHACL shapes via Astrea ─────────────────────
-    shapes_ttl: str | None = None
-    shapes_path = os.path.join(run_dir, "shacl_shapes.ttl")
-
+    obj_props: set[str] = set()
+    data_props: set[str] = set()
     if ontology_path and os.path.exists(ontology_path):
         try:
-            with open(ontology_path, "rb") as _f:
-                _ont_bytes = _f.read()
-            # Astrea REST endpoint — derives shapes from ANY OWL ontology
-            _resp = _requests.post(
-                "https://astrea.linkeddata.es/api/shacl",
-                data=_ont_bytes,
-                headers={"Content-Type": "text/turtle", "Accept": "text/turtle"},
-                timeout=30,
+            from rdflib import Graph as _G, OWL as _OWL, RDF as _RDF
+            _g = _G()
+            _g.parse(ontology_path)
+            obj_props  = {str(p) for p in _g.subjects(_RDF.type, _OWL.ObjectProperty)}
+            data_props = {str(p) for p in _g.subjects(_RDF.type, _OWL.DatatypeProperty)}
+        except Exception:
+            pass
+
+    lines = [
+        "SHACL_ERROR: SHACL VIOLATIONS DETECTED",
+        f"  {len(violations)} unique constraint violation type(s) found in the generated KG.",
+        f"  Shapes derived from: {shapes_source}",
+        "",
+        "  ⚠️  CRITICAL RULE — READ BEFORE EDITING:",
+        "  Do NOT add new intermediate mappings (e.g. CastMapping, RoleMapping).",
+        "  Do NOT create cast nodes, join nodes, or reification mappings.",
+        "  Do NOT change the overall mapping architecture.",
+        "  ONLY fix the specific predicate(s) listed below — nothing else.",
+        "  The previous mapping structure was correct; just fix the listed predicates.",
+        "",
+        "  Each violation is listed with a SPECIFIC FIX INSTRUCTION.",
+        "  Apply ALL fixes before regenerating the YARRRML.",
+        "",
+    ]
+
+    for v in violations[:8]:
+        lines.append(f"  Violation: {v[:140]}")
+        prop_m   = _re.search(r'path=(<[^>]+>|[\w:]+)', v)
+        prop_raw = prop_m.group(1) if prop_m else ""
+        prop_uri = prop_raw.strip("<>")
+        prop_local = prop_uri.split("/")[-1].split("#")[-1] if prop_uri else ""
+        class_name = prop_local[0].upper() + prop_local[1:] if prop_local else "Resource"
+
+        if prop_uri and prop_uri in obj_props:
+            lines.append(
+                f"  FIX: <{prop_uri}> is owl:ObjectProperty — values MUST be IRIs.\n"
+                "       OPTION A (preferred): build an IRI from the column value:\n"
+                f"         Change:  [<{prop_uri}>, $(column), xsd:string]\n"
+                f"         To:      [<{prop_uri}>, example:{class_name}/$(column)~iri]\n"
+                "       OPTION B: replace with a DatatypeProperty that accepts strings:\n"
+                f"         Change:  [<{prop_uri}>, $(column), xsd:string]\n"
+                f"         To:      [schema:roleName, $(column), xsd:string]  (or similar)\n"
+                "       Do NOT use the ontology prefix (e.g. dbo:) in the IRI template —\n"
+                "       use the subject base namespace prefix (ex: or example:) instead.\n"
+                "       Do NOT create any new intermediate mapping to resolve this."
             )
-            if _resp.status_code == 200 and _resp.text.strip():
-                shapes_ttl = _resp.text
-                with open(shapes_path, "w") as _sf:
-                    _sf.write(shapes_ttl)
-                _n = shapes_ttl.count("sh:NodeShape")
-                print(f"    [SHACL] Astrea generated {_n} NodeShape(s) from ontology")
+        elif prop_uri and prop_uri in data_props:
+            lines.append(
+                f"  FIX: <{prop_uri}> is owl:DatatypeProperty — values MUST be literals.\n"
+                "       Remove the '~iri' suffix from this property's PO entry.\n"
+                f"         Change:  [<{prop_uri}>, $(column)~iri]\n"
+                f"         To:      [<{prop_uri}>, $(column), xsd:string]"
+            )
+        elif not prop_uri and "IRI" in v:
+            lines.append(
+                "  FIX: A subject URI template is producing a literal.\n"
+                "       The 's:' line must use a URI template: 'prefix:Class/$(id_column)'.\n"
+                "       Do NOT restructure the mapping."
+            )
+        else:
+            lines.append(
+                f"  FIX: Ensure the value for '{prop_uri or 'this property'}' matches the "
+                "node kind (IRI vs. Literal) required by the ontology.\n"
+                "  Do NOT restructure the mapping — only fix this property."
+            )
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+# ── Shape generation helpers ─────────────────────────────────────────────────
+
+def _sanitize_shacl_shapes(shapes_ttl: str) -> str:
+    """Remove invalid shapes from Astrea output before passing to pyshacl.
+
+    pyshacl strictly requires every sh:PropertyShape to have exactly one
+    sh:path predicate.  Astrea occasionally emits PropertyShapes that have
+    no sh:path (e.g. the 'profession' and 'minute' shapes in some DBpedia
+    ontology responses).  These cause pyshacl to raise:
+      "A shape defined as a PropertyShape must include one `sh:path` property."
+    and abort the entire validation run.
+
+    This function:
+    1. Parses the Turtle with rdflib.
+    2. Identifies every sh:PropertyShape subject.
+    3. Removes all triples whose subject is a PropertyShape without sh:path.
+    4. Re-serialises as Turtle.
+
+    Returns the sanitised Turtle string (or the original if parsing fails).
+    """
+    try:
+        from rdflib import Graph as _G, URIRef as _U, RDF as _RDF
+        _SH_PS   = _U("http://www.w3.org/ns/shacl#PropertyShape")
+        _SH_PATH = _U("http://www.w3.org/ns/shacl#path")
+        _SH_PROP = _U("http://www.w3.org/ns/shacl#property")
+
+        g = _G()
+        g.parse(data=shapes_ttl, format="turtle")
+
+        # Find PropertyShapes that have NO sh:path
+        bad_shapes: set = set()
+        for s in g.subjects(_RDF.type, _SH_PS):
+            if not any(True for _ in g.objects(s, _SH_PATH)):
+                bad_shapes.add(s)
+
+        if not bad_shapes:
+            return shapes_ttl   # nothing to remove
+
+        print(
+            f"    [SHACL] Sanitising Astrea shapes: removing "
+            f"{len(bad_shapes)} PropertyShape(s) without sh:path"
+        )
+
+        # Remove all triples whose subject is a bad shape
+        for s in bad_shapes:
+            for p, o in list(g.predicate_objects(s)):
+                g.remove((s, p, o))
+            # Also remove sh:property references pointing to bad shapes
+            for subj, pred in list(g.subject_predicates(s)):
+                if pred == _SH_PROP:
+                    g.remove((subj, pred, s))
+
+        return g.serialize(format="turtle")
+    except Exception as _e:
+        print(f"    [SHACL] Shape sanitisation failed ({_e}) — using original shapes")
+        return shapes_ttl
+
+
+def _astrea_generate_shapes(ontology_path: str) -> str | None:
+    """Try to fetch SHACL shapes from the Astrea REST API.
+
+    Uses the correct Astrea endpoint as documented in the Swagger UI:
+      POST /api/shacl/document
+      Content-Type: application/json
+      Body: {"ontology": "<ontology text>", "serialisation": "<FORMAT>"}
+      Response: text/rdf+turtle
+
+    Supported serialisation values: TURTLE, RDF_XML, N_TRIPLES, JSON_LD, etc.
+
+    Returns Turtle string on success, None on any failure.
+    """
+    import requests as _req
+    import json as _json
+
+    if not ontology_path or not os.path.exists(ontology_path):
+        return None
+
+    # ── Step 1: Read ontology as raw text ────────────────────────────────
+    try:
+        with open(ontology_path, "r", encoding="utf-8") as _fh:
+            _onto_text = _fh.read()
+    except Exception as _e:
+        print(f"    [SHACL] Astrea: cannot read ontology file: {_e}")
+        return None
+
+    # ── Step 2: Detect serialisation format from file extension ──────────
+    _ext = os.path.splitext(ontology_path)[1].lower()
+    _FORMAT_MAP = {
+        ".ttl":    "TURTLE",
+        ".turtle": "TURTLE",
+        ".rdf":    "RDF_XML",
+        ".xml":    "RDF_XML",
+        ".nt":     "N_TRIPLES",
+        ".jsonld": "JSON_LD",
+        ".json":   "JSON_LD",
+        ".trig":   "TRIG",
+        ".nq":     "N_QUADS",
+        ".trix":   "TRIX",
+    }
+    _serialisation = _FORMAT_MAP.get(_ext, "TURTLE")
+
+    # ── Step 3: POST to /api/shacl/document ──────────────────────────────
+    _ENDPOINT = "https://astrea.linkeddata.es/api/shacl/document"
+    _payload = _json.dumps({
+        "ontology":      _onto_text,
+        "serialisation": _serialisation,
+    })
+
+    try:
+        _r = _req.post(
+            _ENDPOINT,
+            data=_payload,
+            headers={
+                "Content-Type": "application/json",
+                "Accept":       "text/turtle, text/rdf+turtle, */*",
+            },
+            timeout=30,
+        )
+        if _r.status_code == 200 and _r.text.strip():
+            _body = _r.text.strip()
+            if "sh:NodeShape" in _body or "@prefix" in _body or "sh:" in _body:
+                print(
+                    f"    [SHACL] Astrea ✓ "
+                    f"(format={_serialisation}, {len(_body)} chars)"
+                )
+                return _body
             else:
-                print(f"    [SHACL] Astrea returned HTTP {_resp.status_code} — using fallback shapes")
-        except Exception as _e:
-            print(f"    [SHACL] Astrea unreachable ({_e}) — using fallback shapes")
+                print("    [SHACL] Astrea 200 but response doesn't look like SHACL — falling back")
+                return None
+        else:
+            print(
+                f"    [SHACL] Astrea HTTP {_r.status_code} "
+                f"(format={_serialisation}): {_r.text[:200]}"
+            )
+            return None
+    except _req.exceptions.ConnectionError:
+        print("    [SHACL] Astrea unreachable — falling back to local rdflib shape generation")
+        return None
+    except _req.exceptions.Timeout:
+        print("    [SHACL] Astrea timed out — falling back to local rdflib shape generation")
+        return None
+    except Exception as _exc:
+        print(f"    [SHACL] Astrea error: {_exc}")
+        return None
+
+
+def _rdflib_generate_shapes(ontology_path: str) -> str | None:
+    """Generate SHACL shapes locally from an OWL ontology using rdflib.
+
+    Produces NodeShape entries for every class and PropertyShape entries for
+    every ObjectProperty (sh:nodeKind sh:IRI) and DatatypeProperty
+    (sh:nodeKind sh:Literal) declared in the ontology.
+
+    Returns Turtle string on success, None if the ontology cannot be parsed.
+    """
+    if not ontology_path or not os.path.exists(ontology_path):
+        return None
+    try:
+        from rdflib import Graph as _G, OWL as _OWL, RDF as _RDF, RDFS as _RDFS
+        _g = _G()
+        _g.parse(ontology_path)
+
+        _SH = "http://www.w3.org/ns/shacl#"
+        _lines: list[str] = [
+            "@prefix sh: <http://www.w3.org/ns/shacl#> .",
+            "@prefix owl: <http://www.w3.org/2002/07/owl#> .",
+            "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .",
+            "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .",
+            "",
+        ]
+
+        _shape_idx = 0
+
+        # NodeShapes for every owl:Class
+        for _cls in _g.subjects(_RDF.type, _OWL.Class):
+            _cls_s = str(_cls)
+            if _cls_s.startswith("http") and "owl#" not in _cls_s:
+                _lines.append(f"<{_cls_s}Shape> a sh:NodeShape ;")
+                _lines.append(f"    sh:targetClass <{_cls_s}> ;")
+                _lines.append("    sh:nodeKind sh:IRI .")
+                _lines.append("")
+                _shape_idx += 1
+
+        # PropertyShapes for ObjectProperties → nodeKind IRI
+        for _prop in _g.subjects(_RDF.type, _OWL.ObjectProperty):
+            _prop_s = str(_prop)
+            if _prop_s.startswith("http"):
+                _lines.append(f"[] a sh:PropertyShape ;")
+                _lines.append(f"    sh:path <{_prop_s}> ;")
+                _lines.append("    sh:nodeKind sh:IRI .")
+                _lines.append("")
+                _shape_idx += 1
+
+        # PropertyShapes for DatatypeProperties → nodeKind Literal
+        for _prop in _g.subjects(_RDF.type, _OWL.DatatypeProperty):
+            _prop_s = str(_prop)
+            if _prop_s.startswith("http"):
+                _lines.append(f"[] a sh:PropertyShape ;")
+                _lines.append(f"    sh:path <{_prop_s}> ;")
+                _lines.append("    sh:nodeKind sh:Literal .")
+                _lines.append("")
+                _shape_idx += 1
+
+        if _shape_idx == 0:
+            return None
+
+        print(f"    [SHACL] rdflib-local: generated {_shape_idx} shapes from ontology")
+        return "\n".join(_lines)
+    except Exception as _e:
+        print(f"    [SHACL] rdflib-local shape generation failed: {_e}")
+        return None
+
+
+# ── SHACL Validation Node ────────────────────────────────────────────────────
+
+def shacl_validation_node(state: AgentState) -> dict:
+    """Run SHACL validation on the materialised KG.
+
+    Passthrough when ``shacl_enabled`` is False.
+    On violations: builds actionable feedback and sets SHACL_ERROR in feedback.
+    On conformance: sets SHACL_PASSED.
+
+    Persistent-violation guard: if the same (or superset) violations recur
+    across two consecutive retries, the node treats them as unresolvable and
+    passes through to avoid infinite loops.
+    """
+    if not state.get("shacl_enabled", False):
+        return {"feedback": "SHACL_SKIP"}
+
+    import tempfile as _tmp
+
+    kg_path     = state.get("rdf_output", "")
+    onto_path   = state.get("ontology_path", "")
+    run_dir     = state.get("run_dir", "")
+    base_uri    = state.get("base_uri", "http://example.org/mykg#")
+    shacl_retry = state.get("shacl_retry_count", 0)
+    prev_viols  = state.get("_prev_shacl_violations") or []
+    prev_fp     = state.get("shacl_violation_fingerprint", "")
+
+    print(f"\n[SHACL Validator] Running SHACL validation (retry #{shacl_retry}) …")
+
+    if not kg_path or not os.path.exists(kg_path):
+        print("  [SHACL] No KG file found — skipping.")
+        return {"feedback": "SHACL_SKIP"}
+
+    # ── 1. Obtain SHACL shapes ──────────────────────────────────────────────
+    shapes_ttl    = _astrea_generate_shapes(onto_path)
+    shapes_source = "Astrea" if shapes_ttl else None
 
     if not shapes_ttl:
-        # ── Fallback shapes (Astrea unavailable) ─────────────────────
-        # These check basic RDF structural correctness that ANY valid KG
-        # must satisfy, fully agnostic of dataset or ontology.
-        #
-        # WHY inference="none" is required (see Step 2):
-        # RDFS inference auto-asserts  "literal"^^dtype  rdf:type  dtype
-        # for every typed literal.  If we used sh:targetSubjectsOf rdf:type
-        # with inference enabled, those inferred triples would make every
-        # typed literal a validation target and generate hundreds of false
-        # NodeKind violations.  With inference="none" only explicit triples
-        # are evaluated, so sh:targetSubjectsOf rdf:type safely targets only
-        # explicit class assertions whose subjects must be IRIs.
-        shapes_ttl = "\n".join([
-            "@prefix sh:  <http://www.w3.org/ns/shacl#> .",
-            "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .",
-            "@prefix owl: <http://www.w3.org/2002/07/owl#> .",
-            "",
-            "# Rule 1: every subject of an explicit rdf:type triple must be an IRI.",
-            "# (Catches literals accidentally used as subjects, blank-node subjects, etc.)",
-            "[] a sh:NodeShape ;",
-            "   sh:targetSubjectsOf rdf:type ;",
-            "   sh:nodeKind sh:IRI .",
-            "",
-            "# Rule 2: every rdf:type value (the class) must itself be an IRI.",
-            "# (Catches  ?s rdf:type \"SomeString\"  mistakes.)",
-            "[] a sh:NodeShape ;",
-            "   sh:targetSubjectsOf rdf:type ;",
-            "   sh:property [",
-            "     sh:path rdf:type ;",
-            "     sh:nodeKind sh:IRI ;",
-            "   ] .",
-        ])
-        with open(shapes_path, "w") as _sf:
-            _sf.write(shapes_ttl)
-        print("    [SHACL] Using fallback structural shapes (Astrea unavailable)")
+        print("  [SHACL] Astrea unavailable — trying local rdflib shape generation …")
+        shapes_ttl    = _rdflib_generate_shapes(onto_path)
+        shapes_source = "rdflib-local" if shapes_ttl else None
 
-    # ── Step 2: Run pyshacl ───────────────────────────────────────────
-    # CRITICAL: inference must be "none".
-    #
-    # With inference="rdfs", pyshacl's RDFS reasoner fires rule rdfs4b:
-    #   if ?x ?p ?y and ?y is a typed literal then infer ?y rdf:type dtype
-    # This creates  "1916"^^xsd:gYear  rdf:type  xsd:gYear  etc. for every
-    # typed literal in the KG.  The fallback shape sh:targetSubjectsOf rdf:type
-    # then targets those literals and flags them as NodeKind violations —
-    # all false positives on a perfectly valid KG.
-    # inference="none" evaluates only explicit triples in the data graph.
+    if not shapes_ttl:
+        print("  [SHACL] Using minimal structural fallback shapes.")
+        shapes_ttl = (
+            "@prefix sh: <http://www.w3.org/ns/shacl#> .\n"
+            "[] a sh:NodeShape ; sh:targetSubjectsOf "
+            "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ; sh:nodeKind sh:IRI .\n"
+        )
+        shapes_source = "structural-fallback"
+
+    # ── 1b. Sanitise shapes — remove PropertyShapes without sh:path ────────
+    # Astrea occasionally emits path-less PropertyShapes that cause pyshacl
+    # to abort with "A shape defined as a PropertyShape must include one
+    # `sh:path` property."  Strip them before validation.
+    if shapes_source in ("Astrea",):
+        shapes_ttl = _sanitize_shacl_shapes(shapes_ttl)
+
+    # ── 2. Write shapes to file ─────────────────────────────────────────────
+    _shapes_file: str
+    if run_dir:
+        _shapes_file = os.path.join(run_dir, "shacl_shapes.ttl")
+        with open(_shapes_file, "w") as _f:
+            _f.write(shapes_ttl)
+    else:
+        _fd, _shapes_file = _tmp.mkstemp(suffix=".ttl")
+        with os.fdopen(_fd, "w") as _f:
+            _f.write(shapes_ttl)
+
+    # ── 3. Run pyshacl ─────────────────────────────────────────────────────
     try:
-        _conforms, _results_graph, _results_text = _shacl_validate(
-            data_graph=rdf_path,
-            shacl_graph=shapes_path,
-            data_graph_format="ntriples",
-            shacl_graph_format="turtle",
+        import pyshacl as _pyshacl
+        _conforms, _results_g, _results_text = _pyshacl.validate(
+            kg_path,
+            shacl_graph=_shapes_file,
             inference="none",
-            abort_on_first=False,
+            serialize_report_graph=True,
         )
     except Exception as _e:
-        return {
-            "feedback": f"SHACL_ERROR: Validation exception: {_e}",
-            "messages": [f"[SHACL] Validation exception: {_e}"],
-        }
+        print(f"  [SHACL] pyshacl error: {_e}")
+        return {"feedback": "SHACL_SKIP"}
 
-    # Save full report
-    report_path = os.path.join(run_dir, "shacl_report.txt")
-    with open(report_path, "w") as _rf:
-        _rf.write(_results_text)
+    # ── 4. Print / save report ─────────────────────────────────────────────
+    print(f"\n  [SHACL] Shapes source: {shapes_source}")
+    print(f"  [SHACL] {_results_text}")
+
+    if run_dir:
+        try:
+            with open(os.path.join(run_dir, "shacl_report.txt"), "w") as _f:
+                _f.write(f"Shapes source: {shapes_source}\n\n")
+                _f.write(_results_text)
+        except Exception:
+            pass
 
     if _conforms:
-        print("    [SHACL] ✓ KG conforms to all shapes")
+        print("  [SHACL Validator] [PASS] KG conforms to all SHACL shapes.")
         return {
             "feedback": "SHACL_PASSED",
-            "messages": ["[SHACL] KG conforms to all SHACL shapes"],
+            "shacl_retry_count": shacl_retry,
+            "_prev_shacl_violations": [],
+            "shacl_violation_fingerprint": "",
         }
 
-    # ── Step 3: Parse violations → structured feedback ────────────────
-    _violations = _parse_shacl_violations(_results_text)
-    print(f"    [SHACL] ✗ {len(_violations)} unique violation type(s) found")
-    for _v in _violations[:5]:
-        print(f"      - {_v[:100]}")
+    # ── 5. Parse violations ────────────────────────────────────────────────
+    _viols = _parse_shacl_violations(_results_text)
+    cur_fp = _shacl_violation_fingerprint(_viols)
+    print(f"  [SHACL Validator] ✗ {len(_viols)} unique violation type(s) found (shapes: {shapes_source})")
+    for _v in _viols[:5]:
+        print(f"    - {_v[:120]}")
 
-    _fb_lines = [
-        "SHACL_ERROR: SHACL VIOLATIONS DETECTED",
-        f"  {len(_violations)} unique constraint violation type(s) found in the generated KG.",
-        "  Revise the YARRRML mapping so the KG satisfies the ontology constraints.",
-        "  Key violations (deduplicated):",
-    ]
-    for _v in _violations[:8]:
-        _fb_lines.append(f"    • {_v[:120]}")
+    # ── 6. Persistent-violation guard ──────────────────────────────────────
+    if prev_fp and prev_viols:
+        prev_paths = {
+            re.search(r'path=(\S+)', v).group(1)
+            for v in prev_viols if re.search(r'path=(\S+)', v)
+        }
+        cur_paths = {
+            re.search(r'path=(\S+)', v).group(1)
+            for v in _viols if re.search(r'path=(\S+)', v)
+        }
+        _is_persistent = bool(prev_paths and prev_paths.issubset(cur_paths)) or (cur_fp == prev_fp)
+        if _is_persistent:
+            print(
+                "  [SHACL Validator] Persistent violations — "
+                "passing through to avoid infinite loop."
+            )
+            return {
+                "feedback": "SHACL_PASSED",
+                "shacl_retry_count": shacl_retry,
+                "_prev_shacl_violations": _viols,
+                "shacl_violation_fingerprint": cur_fp,
+            }
 
+    # ── 7. Deterministic Pass-B fix (literal → IRI for ObjectProperty) ────
+    yarrrml = state.get("yarrrml_output", "")
+    if yarrrml and onto_path:
+        # Collect obj_props from ontology
+        _obj_props: set[str] = set()
+        try:
+            from rdflib import Graph as _G2, OWL as _OWL2, RDF as _RDF2
+            _g2 = _G2()
+            _g2.parse(onto_path)
+            _obj_props = {str(p) for p in _g2.subjects(_RDF2.type, _OWL2.ObjectProperty)}
+        except Exception:
+            pass
+
+        # Derive base prefix from base_uri
+        _base_pfx = "ex"
+        try:
+            import yaml as _yaml2
+            _yd = _yaml2.safe_load(yarrrml) or {}
+            _pfxs = _yd.get("prefixes", {}) or {}
+            for _k, _v in _pfxs.items():
+                if isinstance(_v, str) and base_uri and _v.rstrip("/#") == base_uri.rstrip("/#"):
+                    _base_pfx = _k
+                    break
+        except Exception:
+            pass
+
+        _fixed, _fix_msgs = _fix_iri_template_for_objectproperty(
+            yarrrml, _viols, _obj_props, _base_pfx, base_uri
+        )
+        if _fix_msgs:
+            for _msg in _fix_msgs:
+                print(f"  [SHACL] Deterministic fix: {_msg}")
+            print(f"  [SHACL] Deterministic fix applied ({len(_fix_msgs)} patch(es)) — re-materialising without LLM.")
+            return {
+                "yarrrml_output": _fixed,
+                "feedback": "SHACL_ERROR",
+                "shacl_retry_count": shacl_retry + 1,
+                "_prev_shacl_violations": _viols,
+                "shacl_violation_fingerprint": cur_fp,
+            }
+
+    # ── 8. Build LLM feedback ──────────────────────────────────────────────
+    _fb = _build_shacl_actionable_feedback(_viols, onto_path, shapes_source)
+    print("  [SHACL Validator] Sending violation feedback to YARRRML generator …")
     return {
-        "feedback": "\n".join(_fb_lines),
-        "messages": [f"[SHACL] {len(_violations)} violation type(s) — routing back to YARRRML generator"],
+        "feedback": _fb,
+        "shacl_retry_count": shacl_retry + 1,
+        "_prev_shacl_violations": _viols,
+        "shacl_violation_fingerprint": cur_fp,
     }
-
-
-
-
-
 

@@ -1,0 +1,33 @@
+prefixes:
+  dbo: "http://dbpedia.org/ontology/"
+  xsd: "http://www.w3.org/2001/XMLSchema#"
+  rdf: "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+  rdfs: "http://www.w3.org/2000/01/rdf-schema#"
+  mykg: "http://mykg.org/resource/"
+
+mappings:
+  FilmMapping:
+    sources:
+      - [data/input/hofer-imdb/diamond/movie_data.csv~csv]
+    s: mykg:Film/$(movie_id)
+    po:
+      - [a, dbo:Film]
+      - [dbo:title, $(primaryTitle), xsd:string]
+      - [dbo:originalTitle, $(originalTitle), xsd:string]
+      - [dbo:startYear, $(startYear), xsd:gYear]
+      - [dbo:runtime, $(runtimeMinutes), xsd:integer]
+      - [dbo:genre, $(genres), xsd:string]
+      - [dbo:isAdult, $(isAdult)]
+      - [dbo:titleType, $(titleType), xsd:string]
+      - [dbo:starring, mykg:Person/$(person_id)~iri]
+
+  PersonMapping:
+    sources:
+      - [data/input/hofer-imdb/diamond/movie_data.csv~csv]
+    s: mykg:Person/$(person_id)
+    po:
+      - [a, dbo:Person]
+      - [dbo:name, $(primaryName), xsd:string]
+      - [dbo:profession, $(category), xsd:string]
+      - [dbo:birthYear, $(birthYear), xsd:gYear]
+      - [dbo:deathYear, $(deathYear), xsd:gYear]

@@ -14,6 +14,7 @@ from graph.nodes import (
     shacl_validation_node,
 )
 from langgraph.checkpoint.memory import MemorySaver
+from config.settings import RETRY_SYNTAX_MAX, RETRY_LOGIC_MAX, RETRY_SHACL_MAX, RETRY_CQ_MAX
 import os
 
 
@@ -39,7 +40,7 @@ def build_rml_graph():
         feedback = state.get("feedback", "")
         retries = state.get("retry_count", 0)
         if "SYNTAX_ERROR" in feedback:
-            if retries >= 10:
+            if retries >= RETRY_SYNTAX_MAX:
                 return END
             return "generate_yarrrml"
         return "refine_logic"
@@ -48,7 +49,7 @@ def build_rml_graph():
         feedback = state.get("feedback", "")
         retries = state.get("retry_count", 0)
         if "LOGIC_ERROR" in feedback:
-            if retries >= 6:
+            if retries >= RETRY_LOGIC_MAX:
                 return END
             return "generate_yarrrml"
         return "generate_kg"
@@ -63,7 +64,7 @@ def build_rml_graph():
         fb = state.get("feedback", "")
         retries = state.get("retry_count", 0)
         if "SHACL_ERROR" in fb:
-            if retries >= 10:
+            if retries >= RETRY_SHACL_MAX:
                 # Retry cap reached — accept current KG and move on
                 return "sparql_validate_cqs"
             return "generate_yarrrml"
@@ -73,12 +74,11 @@ def build_rml_graph():
         """Route after SPARQL-based CQ validation on the materialized KG."""
         feedback = state.get("feedback", "")
         cq_sparql_retries = state.get("cq_sparql_retry_count", 0)
-        max_retries = int(os.environ.get("CQ_SPARQL_MAX_RETRIES", "3"))
 
         if "CQ_SPARQL_ERROR" in feedback:
-            if cq_sparql_retries >= max_retries:
+            if cq_sparql_retries >= RETRY_CQ_MAX:
                 print(
-                    f"    [SPARQL CQ Validator] Retry cap ({max_retries}) reached "
+                    f"    [SPARQL CQ Validator] Retry cap ({RETRY_CQ_MAX}) reached "
                     "— accepting current KG."
                 )
                 return END

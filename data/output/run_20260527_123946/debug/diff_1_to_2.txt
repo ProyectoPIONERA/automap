@@ -1,0 +1,20 @@
+--- attempt_1.yaml
++++ attempt_2.yaml
+@@ -1,4 +1,5 @@
+ prefixes:
++  ex: "http://example.org/"
+   dbo: "http://dbpedia.org/ontology/"
+   xsd: "http://www.w3.org/2001/XMLSchema#"
+   rdf: "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+@@ -17,9 +18,9 @@
+       - [dbo:startYear, $(startYear), xsd:gYear]
+       - [dbo:runtime, $(runtimeMinutes), xsd:integer]
+       - [dbo:genre, $(genres), xsd:string]
+-      - [dbo:isAdult, $(isAdult)]
++      - [ex:isAdult, $(isAdult), xsd:boolean]
+       - [dbo:titleType, $(titleType), xsd:string]
+-      - [dbo:starring, mykg:Person/$(person_id)~iri]
++      - [ex:ordering, $(ordering), xsd:string]
+ 
+   PersonMapping:
+     sources:

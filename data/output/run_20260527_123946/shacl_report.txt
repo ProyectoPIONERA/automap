@@ -1,0 +1,75 @@
+Shapes source: Astrea
+
+Validation Report
+Conforms: False
+Results (10):
+Constraint Violation in DatatypeConstraintComponent (http://www.w3.org/ns/shacl#DatatypeConstraintComponent):
+	Severity: sh:Violation
+	Source Shape: <https://astrea.linkeddata.es/shapes#335a6520cf4bc92d8c36600e8519c6a3>
+	Focus Node: <http://mykg.org/resource/Person/nm0000002>
+	Value Node: Literal("Lauren Bacall")
+	Result Path: dbo:name
+	Message: Value is not Literal with datatype rdf:langString
+Constraint Violation in DatatypeConstraintComponent (http://www.w3.org/ns/shacl#DatatypeConstraintComponent):
+	Severity: sh:Violation
+	Source Shape: <https://astrea.linkeddata.es/shapes#335a6520cf4bc92d8c36600e8519c6a3>
+	Focus Node: <http://mykg.org/resource/Person/nm0000018>
+	Value Node: Literal("Kirk Douglas")
+	Result Path: dbo:name
+	Message: Value is not Literal with datatype rdf:langString
+Constraint Violation in DatatypeConstraintComponent (http://www.w3.org/ns/shacl#DatatypeConstraintComponent):
+	Severity: sh:Violation
+	Source Shape: <https://astrea.linkeddata.es/shapes#335a6520cf4bc92d8c36600e8519c6a3>
+	Focus Node: <http://mykg.org/resource/Person/nm0000101>
+	Value Node: Literal("Dan Aykroyd")
+	Result Path: dbo:name
+	Message: Value is not Literal with datatype rdf:langString
+Constraint Violation in DatatypeConstraintComponent (http://www.w3.org/ns/shacl#DatatypeConstraintComponent):
+	Severity: sh:Violation
+	Source Shape: <https://astrea.linkeddata.es/shapes#335a6520cf4bc92d8c36600e8519c6a3>
+	Focus Node: <http://mykg.org/resource/Person/nm0002706>
+	Value Node: Literal("David L. Bertman")
+	Result Path: dbo:name
+	Message: Value is not Literal with datatype rdf:langString
+Constraint Violation in DatatypeConstraintComponent (http://www.w3.org/ns/shacl#DatatypeConstraintComponent):
+	Severity: sh:Violation
+	Source Shape: <https://astrea.linkeddata.es/shapes#335a6520cf4bc92d8c36600e8519c6a3>
+	Focus Node: <http://mykg.org/resource/Person/nm0006107>
+	Value Node: Literal("Joel Goldsmith")
+	Result Path: dbo:name
+	Message: Value is not Literal with datatype rdf:langString
+Constraint Violation in DatatypeConstraintComponent (http://www.w3.org/ns/shacl#DatatypeConstraintComponent):
+	Severity: sh:Violation
+	Source Shape: <https://astrea.linkeddata.es/shapes#335a6520cf4bc92d8c36600e8519c6a3>
+	Focus Node: <http://mykg.org/resource/Person/nm0021607>
+	Value Node: Literal("Corbin Allred")
+	Result Path: dbo:name
+	Message: Value is not Literal with datatype rdf:langString
+Constraint Violation in DatatypeConstraintComponent (http://www.w3.org/ns/shacl#DatatypeConstraintComponent):
+	Severity: sh:Violation
+	Source Shape: <https://astrea.linkeddata.es/shapes#335a6520cf4bc92d8c36600e8519c6a3>
+	Focus Node: <http://mykg.org/resource/Person/nm0038875>
+	Value Node: Literal("John Asher")
+	Result Path: dbo:name
+	Message: Value is not Literal with datatype rdf:langString
+Constraint Violation in DatatypeConstraintComponent (http://www.w3.org/ns/shacl#DatatypeConstraintComponent):
+	Severity: sh:Violation
+	Source Shape: <https://astrea.linkeddata.es/shapes#335a6520cf4bc92d8c36600e8519c6a3>
+	Focus Node: <http://mykg.org/resource/Person/nm0254580>
+	Value Node: Literal("Paul Elliott")
+	Result Path: dbo:name
+	Message: Value is not Literal with datatype rdf:langString
+Constraint Violation in DatatypeConstraintComponent (http://www.w3.org/ns/shacl#DatatypeConstraintComponent):
+	Severity: sh:Violation
+	Source Shape: <https://astrea.linkeddata.es/shapes#335a6520cf4bc92d8c36600e8519c6a3>
+	Focus Node: <http://mykg.org/resource/Person/nm0441631>
+	Value Node: Literal("Allan Aaron Katz")
+	Result Path: dbo:name
+	Message: Value is not Literal with datatype rdf:langString
+Constraint Violation in DatatypeConstraintComponent (http://www.w3.org/ns/shacl#DatatypeConstraintComponent):
+	Severity: sh:Violation
+	Source Shape: <https://astrea.linkeddata.es/shapes#335a6520cf4bc92d8c36600e8519c6a3>
+	Focus Node: <http://mykg.org/resource/Person/nm4500812>
+	Value Node: Literal("Patricia Green")
+	Result Path: dbo:name
+	Message: Value is not Literal with datatype rdf:langString

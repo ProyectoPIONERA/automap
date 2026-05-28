@@ -1,0 +1,67 @@
+<http://mykg.org/resource/Film/tt0167423> <http://example.org/ordering> "6" .
+<http://mykg.org/resource/Person/nm0021607> <http://dbpedia.org/ontology/name> "Corbin Allred" .
+<http://mykg.org/resource/Person/nm0021607> <http://dbpedia.org/ontology/birthYear> "1979"^^<http://www.w3.org/2001/XMLSchema#gYear> .
+<http://mykg.org/resource/Film/tt0167423> <http://dbpedia.org/ontology/titleType> "movie" .
+<http://mykg.org/resource/Person/nm0000002> <http://dbpedia.org/ontology/deathYear> "2014"^^<http://www.w3.org/2001/XMLSchema#gYear> .
+<http://mykg.org/resource/Person/nm0000002> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Person> .
+<http://mykg.org/resource/Person/nm0441631> <http://dbpedia.org/ontology/profession> "writer" .
+<http://mykg.org/resource/Person/nm0006107> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Person> .
+<http://mykg.org/resource/Film/tt0167423> <http://example.org/ordering> "4" .
+<http://mykg.org/resource/Film/tt0167423> <http://example.org/ordering> "5" .
+<http://mykg.org/resource/Film/tt0167423> <http://dbpedia.org/ontology/starring> <http://mykg.org/resource/Person/nm0000101> .
+<http://mykg.org/resource/Person/nm0000101> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Person> .
+<http://mykg.org/resource/Film/tt0167423> <http://example.org/ordering> "3" .
+<http://mykg.org/resource/Film/tt0167423> <http://dbpedia.org/ontology/starring> <http://mykg.org/resource/Person/nm0006107> .
+<http://mykg.org/resource/Person/nm0006107> <http://dbpedia.org/ontology/deathYear> "2012"^^<http://www.w3.org/2001/XMLSchema#gYear> .
+<http://mykg.org/resource/Film/tt0167423> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Film> .
+<http://mykg.org/resource/Person/nm0000018> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Person> .
+<http://mykg.org/resource/Person/nm0038875> <http://dbpedia.org/ontology/birthYear> "1971"^^<http://www.w3.org/2001/XMLSchema#gYear> .
+<http://mykg.org/resource/Film/tt0167423> <http://dbpedia.org/ontology/starring> <http://mykg.org/resource/Person/nm0038875> .
+<http://mykg.org/resource/Film/tt0167423> <http://dbpedia.org/ontology/runtime> "91"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://mykg.org/resource/Person/nm0000002> <http://dbpedia.org/ontology/birthYear> "1924"^^<http://www.w3.org/2001/XMLSchema#gYear> .
+<http://mykg.org/resource/Person/nm0441631> <http://dbpedia.org/ontology/name> "Allan Aaron Katz" .
+<http://mykg.org/resource/Film/tt0167423> <http://example.org/ordering> "2" .
+<http://mykg.org/resource/Film/tt0167423> <http://example.org/ordering> "10" .
+<http://mykg.org/resource/Film/tt0167423> <http://dbpedia.org/ontology/starring> <http://mykg.org/resource/Person/nm0441631> .
+<http://mykg.org/resource/Person/nm0006107> <http://dbpedia.org/ontology/birthYear> "1957"^^<http://www.w3.org/2001/XMLSchema#gYear> .
+<http://mykg.org/resource/Film/tt0167423> <http://dbpedia.org/ontology/starring> <http://mykg.org/resource/Person/nm0021607> .
+<http://mykg.org/resource/Film/tt0167423> <http://dbpedia.org/ontology/starring> <http://mykg.org/resource/Person/nm0000018> .
+<http://mykg.org/resource/Person/nm0000018> <http://dbpedia.org/ontology/deathYear> "2020"^^<http://www.w3.org/2001/XMLSchema#gYear> .
+<http://mykg.org/resource/Person/nm4500812> <http://dbpedia.org/ontology/profession> "producer" .
+<http://mykg.org/resource/Person/nm0000002> <http://dbpedia.org/ontology/name> "Lauren Bacall" .
+<http://mykg.org/resource/Person/nm0006107> <http://dbpedia.org/ontology/profession> "composer" .
+<http://mykg.org/resource/Person/nm0038875> <http://dbpedia.org/ontology/name> "John Asher" .
+<http://mykg.org/resource/Film/tt0167423> <http://dbpedia.org/ontology/starring> <http://mykg.org/resource/Person/nm4500812> .
+<http://mykg.org/resource/Person/nm4500812> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Person> .
+<http://mykg.org/resource/Person/nm0441631> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Person> .
+<http://mykg.org/resource/Person/nm0254580> <http://dbpedia.org/ontology/profession> "cinematographer" .
+<http://mykg.org/resource/Person/nm0000101> <http://dbpedia.org/ontology/profession> "actor" .
+<http://mykg.org/resource/Film/tt0167423> <http://dbpedia.org/ontology/genre> "Comedy, Mystery" .
+<http://mykg.org/resource/Person/nm0000018> <http://dbpedia.org/ontology/birthYear> "1916"^^<http://www.w3.org/2001/XMLSchema#gYear> .
+<http://mykg.org/resource/Person/nm0000018> <http://dbpedia.org/ontology/profession> "actor" .
+<http://mykg.org/resource/Film/tt0167423> <http://example.org/ordering> "8" .
+<http://mykg.org/resource/Person/nm0002706> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Person> .
+<http://mykg.org/resource/Film/tt0167423> <http://example.org/ordering> "1" .
+<http://mykg.org/resource/Person/nm0021607> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Person> .
+<http://mykg.org/resource/Person/nm0000101> <http://dbpedia.org/ontology/birthYear> "1952"^^<http://www.w3.org/2001/XMLSchema#gYear> .
+<http://mykg.org/resource/Person/nm0002706> <http://dbpedia.org/ontology/name> "David L. Bertman" .
+<http://mykg.org/resource/Film/tt0167423> <http://dbpedia.org/ontology/isAdult> "0" .
+<http://mykg.org/resource/Film/tt0167423> <http://dbpedia.org/ontology/originalTitle> "Diamonds" .
+<http://mykg.org/resource/Person/nm0038875> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Person> .
+<http://mykg.org/resource/Film/tt0167423> <http://dbpedia.org/ontology/startYear> "1999"^^<http://www.w3.org/2001/XMLSchema#gYear> .
+<http://mykg.org/resource/Person/nm0002706> <http://dbpedia.org/ontology/profession> "editor" .
+<http://mykg.org/resource/Film/tt0167423> <http://dbpedia.org/ontology/starring> <http://mykg.org/resource/Person/nm0254580> .
+<http://mykg.org/resource/Person/nm0000002> <http://dbpedia.org/ontology/profession> "actress" .
+<http://mykg.org/resource/Person/nm0254580> <http://dbpedia.org/ontology/name> "Paul Elliott" .
+<http://mykg.org/resource/Film/tt0167423> <http://dbpedia.org/ontology/starring> <http://mykg.org/resource/Person/nm0002706> .
+<http://mykg.org/resource/Person/nm0000018> <http://dbpedia.org/ontology/name> "Kirk Douglas" .
+<http://mykg.org/resource/Person/nm0000101> <http://dbpedia.org/ontology/name> "Dan Aykroyd" .
+<http://mykg.org/resource/Person/nm0038875> <http://dbpedia.org/ontology/profession> "director" .
+<http://mykg.org/resource/Film/tt0167423> <http://dbpedia.org/ontology/starring> <http://mykg.org/resource/Person/nm0000002> .
+<http://mykg.org/resource/Film/tt0167423> <http://example.org/ordering> "7" .
+<http://mykg.org/resource/Film/tt0167423> <http://dbpedia.org/ontology/title> "Diamonds" .
+<http://mykg.org/resource/Person/nm0254580> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Person> .
+<http://mykg.org/resource/Person/nm0006107> <http://dbpedia.org/ontology/name> "Joel Goldsmith" .
+<http://mykg.org/resource/Film/tt0167423> <http://example.org/ordering> "9" .
+<http://mykg.org/resource/Person/nm4500812> <http://dbpedia.org/ontology/name> "Patricia Green" .
+<http://mykg.org/resource/Person/nm0021607> <http://dbpedia.org/ontology/profession> "actor" .

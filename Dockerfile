@@ -23,4 +23,10 @@ RUN uv run bash scripts/patch_morph_kgc.sh
 # Copy the rest of the project
 COPY . .
 
-CMD ["uv", "run", "python", "main.py"]
+# Copy env template so users know what variables are needed.
+# The actual .env is mounted at runtime via docker-compose or -v flag.
+COPY .env.example .env.example
+
+# Use ENTRYPOINT so extra CLI flags (e.g. --shacl --sparql) can be passed
+# via `docker run` or the docker-compose `command:` key.
+ENTRYPOINT ["uv", "run", "python", "main.py"]

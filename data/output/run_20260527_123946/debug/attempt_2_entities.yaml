@@ -1,0 +1,25 @@
+mappings:
+  FilmMapping:
+    sources:
+      - [data/input/hofer-imdb/diamond/movie_data.csv~csv]
+    s: dbo:Film/$(movie_id)
+    po:
+      - [a, dbo:Film]
+      - [dbo:title, $(primaryTitle), xsd:string]
+      - [dbo:originalTitle, $(originalTitle), xsd:string]
+      - [dbo:startYear, $(startYear), xsd:gYear]
+      - [dbo:runtime, $(runtimeMinutes), xsd:integer]
+      - [dbo:genre, $(genres), xsd:string]
+      - [isAdult, $(isAdult), xsd:boolean]
+      - [dbo:titleType, $(titleType), xsd:string]
+      - [ex:ordering, $(ordering), xsd:string]
+  PersonMapping:
+    sources:
+      - [data/input/hofer-imdb/diamond/movie_data.csv~csv]
+    s: dbo:Person/$(person_id)
+    po:
+      - [a, dbo:Person]
+      - [dbo:name, $(primaryName), xsd:string]
+      - [dbo:profession, $(category), xsd:string]
+      - [dbo:birthYear, $(birthYear), xsd:gYear]
+      - [dbo:deathYear, $(deathYear), xsd:gYear]
