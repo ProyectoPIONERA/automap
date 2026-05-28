@@ -1,0 +1,170 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+@prefix dbo: <http://dbpedia.org/ontology/>.
+@prefix dul: <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#> .
+
+####
+# Ontology Metadata (The Fix for Astrea)
+####
+<http://example.org/my-pipeline-ontology> a owl:Ontology ;
+   rdfs:label "My Pipeline Ontology" ;
+   rdfs:comment "An ontology for tracking persons, works, films, and video games in the data pipeline." .
+
+####
+# Class hierarchy
+###
+
+dbo:Person a owl:Class ;
+   rdf:label "person" ;
+   rdfs:subClassOf dbo:Agent .
+
+dbo:Actor a owl:Class ;
+   rdfs:label "actor" ;
+   rdfs:subClassOf dbo:Person .
+
+dbo:Work a owl:Class ;
+   rdfs:label "work" .
+
+dbo:Film a owl:Class ;
+   rdfs:label "film" ;
+   rdfs:subClassOf dbo:Work .
+
+dbo:VideoGame a owl:Class ;
+   rdfs:label "video game" ;
+   rdfs:subClassOf dbo:Work .
+
+###
+# Properties for Persons
+###
+
+dbo:name a owl:DatatypeProperty ;
+   rdfs:label "name" ;
+   rdfs:range rdf:langString ;
+   rdfs:domain dbo:Person .
+
+dbo:birthYear a owl:DatatypeProperty ;
+   rdfs:label "birth year" ;
+   rdfs:range xsd:gYear ;
+   rdfs:domain dbo:Person .
+
+dbo:deathYear  a owl:DatatypeProperty ;
+   rdfs:label "death year" ;
+   rdfs:range xsd:gYear ;
+   rdfs:domain dbo:Person .
+
+dbo:profession a owl:ObjectProperty ;
+   rdfs:label "profession" ;
+   rdfs:domain dbo:Person .
+
+###
+# Properties for (creative) work resources
+###
+
+dbo:genre a owl:DatatypeProperty ;
+   rdfs:label "genre" ;
+   rdfs:range rdf:langString ;
+   rdfs:domain dbo:Work .
+
+dbo:title a owl:DatatypeProperty ;
+   rdfs:label "title" ;
+   rdfs:range rdf:langString ;
+   rdfs:domain dbo:Work .
+
+dbo:originalTitle a owl:DatatypeProperty ;
+   rdfs:label "original title" ;
+   rdfs:range rdf:langString ;
+   rdfs:domain dbo:Work .
+
+dbo:startYear a owl:DatatypeProperty ;
+   rdfs:label "start year" ;
+   rdfs:range xsd:gYear ;
+   rdfs:domain dbo:Work .
+
+dbo:endYear a owl:DatatypeProperty ;
+   rdfs:label "end year" ;
+   rdfs:range xsd:gYear ;
+   rdfs:domain dbo:Work .
+
+dbo:runtime a owl:DatatypeProperty ;
+   rdfs:label "runtime (s)" ;
+   rdfs:range xsd:double ;
+   rdfs:domain dbo:Work .
+
+<http://dbpedia.org/ontology/Work/runtime> a owl:DatatypeProperty ;
+  rdfs:label "runtime (m)" ;
+  rdfs:range <https://dbpedia.org/datatype/minute> ;
+  rdfs:domain dbo:Work .
+
+<https://dbpedia.org/datatype/minute> a rdfs:Datatype ;
+  rdfs:label "minute" .
+
+###
+# Properties for Person role in Work
+###
+
+dul:coparticipatesWith a owl:ObjectProperty ;
+   rdfs:label "co-participates with" ;
+   rdfs:comment "A relation between two objects participating in a same Event; e.g., 'Vitas and Jimmy are playing tennis'." ;
+   rdf:type owl:SymmetricProperty ;
+   owl:propertyChainAxiom (
+      dul:isParticipantIn
+      dul:hasParticipant
+   ) .
+
+dul:sameSettingAs rdf:type owl:ObjectProperty ;
+   rdfs:label "is in the same setting as" ;
+   rdfs:comment "A relation between two entities participating in a same Situation; e.g., 'Our company provides an antivenom service' (the situation is the service, the two entities are the company and the antivenom)." ;
+   rdf:type owl:SymmetricProperty ;
+   owl:propertyChainAxiom (
+      dul:hasSetting
+      dul:isSettingFor
+   ) .
+
+dbo:director a owl:ObjectProperty ;
+   rdfs:label "film director" ;
+   rdfs:range dbo:Person ;
+   rdfs:domain dbo:Film ;
+   rdfs:subPropertyOf dul:coparticipatesWith .
+
+dbo:starring a owl:ObjectProperty ;
+   rdfs:label "starring" ;
+   rdfs:range dbo:Actor ;
+   rdfs:domain dbo:Work ;
+   rdfs:subPropertyOf dul:sameSettingAs .
+
+dbo:executiveProducer   a  owl:ObjectProperty ;
+   rdfs:label  "executive producer" ;
+   rdfs:range  dbo:Person ;
+   rdfs:subPropertyOf   dul:coparticipatesWith .
+
+dbo:producer a owl:ObjectProperty ;
+   rdfs:label "producer" ;
+   rdfs:comment "The producer of the creative work." ;
+   rdfs:range dbo:Agent ;
+   rdfs:domain dbo:Work ;
+   rdfs:subPropertyOf dul:coparticipatesWith .
+
+dbo:writer a owl:ObjectProperty ;
+   rdfs:label "writer" ;
+   rdfs:range dbo:Person ;
+   rdfs:domain dbo:Work ;
+   rdfs:subPropertyOf dul:coparticipatesWith .
+
+dbo:composer a owl:ObjectProperty ;
+   rdfs:label "composer" ;
+   rdfs:range dbo:Person ;
+   rdfs:domain dbo:Work ;
+   rdfs:subPropertyOf dul:coparticipatesWith .
+
+dbo:editor  a owl:ObjectProperty ;
+   rdfs:label "editor" , "redaktor"@pl , "Herausgeber"@de ;
+   rdfs:range dbo:Agent ;
+   rdfs:subPropertyOf dul:coparticipatesWith .
+
+dbo:editing  a owl:ObjectProperty ;
+   rdfs:label "editing" ;
+   rdfs:range dbo:Person ;
+   rdfs:domain dbo:Film ;
+   rdfs:subPropertyOf dul:coparticipatesWith .

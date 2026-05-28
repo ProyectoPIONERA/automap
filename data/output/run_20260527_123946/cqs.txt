@@ -1,0 +1,14 @@
+# Competency Questions (auto-generated)
+# Generated: 2026-05-27T12:41:15.559220
+# Total: 10
+
+1. Which films exist in the dataset?
+2. What is the runtime of a given film?
+3. Which actors are linked to a specific film via their roles?
+4. How many years has a person lived based on their birth and death year?
+5. What is the original title of a given film?
+6. Which genres are associated with a specific film?
+7. Are there any adult films in the dataset?
+8. What is the primary name of a given person?
+9. In which year was a specific film released?
+10. Which persons have acted or directed in films?

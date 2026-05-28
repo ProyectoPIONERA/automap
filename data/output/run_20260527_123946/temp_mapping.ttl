@@ -1,0 +1,211 @@
+@prefix ex: <http://example.org/>.
+@prefix dbo: <http://dbpedia.org/ontology/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix mykg: <http://mykg.org/resource/>.
+@prefix rr: <http://www.w3.org/ns/r2rml#>.
+@prefix rml: <http://semweb.mmlab.be/ns/rml#>.
+@prefix ql: <http://semweb.mmlab.be/ns/ql#>.
+@prefix d2rq: <http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#>.
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+@prefix schema: <http://schema.org/>.
+@prefix formats: <http://www.w3.org/ns/formats/>.
+@prefix comp: <http://semweb.mmlab.be/ns/rml-compression#>.
+@prefix void: <http://rdfs.org/ns/void#>.
+@prefix fnml: <http://semweb.mmlab.be/ns/fnml#>.
+@prefix grel: <http://users.ugent.be/~bjdmeest/function/grel.ttl#>.
+@base <http://example.com/ns#>.
+
+
+<FilmMapping_0> a rr:TriplesMap;
+
+	rml:logicalSource [
+		a rml:LogicalSource;
+		rml:source "/home/naveen/Documents/LLM-Agents_RML/data/input/hofer-imdb/diamond/movie_data.csv";
+		rml:referenceFormulation ql:CSV
+
+	];
+	rr:subjectMap [
+		a rr:SubjectMap;
+		rr:template "http://mykg.org/resource/Film/{movie_id}";
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant rdf:type;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rr:constant dbo:Film;
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant dbo:title;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "primaryTitle";
+			rr:datatype xsd:string
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant dbo:originalTitle;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "originalTitle";
+			rr:datatype xsd:string
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant dbo:startYear;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "startYear";
+			rr:datatype xsd:gYear
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant dbo:runtime;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "runtimeMinutes";
+			rr:datatype xsd:integer
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant dbo:genre;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "genres";
+			rr:datatype xsd:string
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant ex:isAdult;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "isAdult";
+			rr:datatype xsd:boolean
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant dbo:titleType;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "titleType";
+			rr:datatype xsd:string
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant ex:ordering;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "ordering";
+			rr:datatype xsd:string
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant ex:hasPerson;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rr:template "http://mykg.org/resource/Person/{person_id}";
+			rr:termType rr:IRI
+		];
+	].
+
+
+<PersonMapping_0> a rr:TriplesMap;
+
+	rml:logicalSource [
+		a rml:LogicalSource;
+		rml:source "/home/naveen/Documents/LLM-Agents_RML/data/input/hofer-imdb/diamond/movie_data.csv";
+		rml:referenceFormulation ql:CSV
+
+	];
+	rr:subjectMap [
+		a rr:SubjectMap;
+		rr:template "http://mykg.org/resource/Person/{person_id}";
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant rdf:type;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rr:constant dbo:Person;
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant dbo:name;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "primaryName";
+			rr:datatype xsd:string
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant dbo:profession;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "category";
+			rr:datatype xsd:string
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant dbo:birthYear;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "birthYear";
+			rr:datatype xsd:gYear
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant dbo:deathYear;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "deathYear";
+			rr:datatype xsd:gYear
+		];
+	].
+
+
