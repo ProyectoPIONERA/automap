@@ -217,22 +217,6 @@ All scores are reported as **Precision / Recall / F1**.
 
 ---
 
-## Integrity Check
-
-To confirm `metrics.py` was not modified, you can verify it against the upstream file:
-
-```bash
-# From inside kg-pipeline repo root
-git diff HEAD -- kg_core/metrics/metrics.py
-# Should output nothing (no changes)
-
-# Or check the SHA256
-sha256sum kg_core/metrics/metrics.py
-# Compare with the hash of the upstream file at the pinned commit
-```
-
----
-
 ## Citing
 
 If you use this validation approach, please cite the original paper:
