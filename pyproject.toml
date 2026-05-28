@@ -21,14 +21,3 @@ dependencies = [
     "pyoxigraph>=0.3.22",
     "pyshacl>=0.31.0",
 ]
-
-[project.scripts]
-rml-dashboard = "tools.dashboard:main"
-
-[tool.uv.notes]
-morph-kgc-patches = """
-morph-kgc requires two manual patches for compatibility with pandas>=2.0 and numpy>=2.0:
-  1. mapping_partitioner.py:194 — .value_counts()[0] → .value_counts().iloc[0]  (pandas 2.0)
-  2. utils.py — np.NaN → np.nan  (numpy 2.0)
-Run: scripts/patch_morph_kgc.sh after uv sync
-"""
