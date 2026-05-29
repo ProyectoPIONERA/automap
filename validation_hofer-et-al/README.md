@@ -77,7 +77,7 @@ cd kg-pipeline
 The commit used for this evaluation:
 
 ```
-git checkout <commit-hash>   # pin to the exact commit you used
+git checkout eb3a211d07a1a710f31294f353b780e794cedad9
 ```
 
 ### 2. Install dependencies
