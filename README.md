@@ -114,6 +114,9 @@ Ensure you have [uv](https://github.com/astral-sh/uv) installed.
 # Sync dependencies
 uv sync
 
+# Activate the virtual environment
+source .venv/bin/activate  
+
 # Apply essential Morph-KGC compatibility patches
 # NOTE: This script is currently optimised for Linux.
 bash scripts/patch_morph_kgc.sh
@@ -362,7 +365,7 @@ automap/
 │
 ├── validation_hofer-et-al/          # Reproducibility benchmark (Hofer et al. comparison)
 │   ├── compare_my_pipeline.py       #   Side-by-side F1 comparison against the GPT-4 reference pipeline
-│   ├── REPRODUCIBILITY.md           #   Step-by-step reproduction guide + expected output
+│   ├── README.md           #   Step-by-step reproduction guide + expected output
 │   └── target/                      #   Comparison output artefacts (comparison_results.json)
 │
 ├── tools/                           # Developer utilities (not part of the core pipeline)
