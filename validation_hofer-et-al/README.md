@@ -48,8 +48,8 @@ The `kg-pipeline` repository (Hofer et al.) is a **separate dependency** cloned 
 
 | Pipeline | Model | Input format | KG file |
 |---|---|---|---|
-| Hofer et al. | GPT-4 (0125-preview) | JSON | [`gpt-4-0125-preview_101.ttl`](https://akswnc7.informatik.uni-leipzig.de/~mhofer/paper_supplements/eswc24/kgc/results/generated_triples/gpt-4-0125-preview_101.ttl) |
-| Hofer et al. | Claude 3 Opus | JSON | [`claude-3-opus-20240229_12.ttl`](https://akswnc7.informatik.uni-leipzig.de/~mhofer/paper_supplements/eswc24/kgc/results/generated_triples/claude-3-opus-20240229_12.ttl) |
+| Hofer et al. | GPT-4 (0125-preview) | JSON | [`gpt-4-0125-preview_101.ttl`](https://akswnc7.informatik.uni-leipzig.de/~mhofer/paper_supplements/eswc24/kgc/results/generated_triples.nt/gpt-4-0125-preview_101.ttl.nt) |
+| Hofer et al. | Claude 3 Opus | JSON | [`claude-3-opus-20240229_12.ttl`](https://akswnc7.informatik.uni-leipzig.de/~mhofer/paper_supplements/eswc24/kgc/results/generated_triples.nt/claude-3-opus-20240229_12.ttl.nt) |
 | **Ours** | **Qwen 2.5 14B Instruct** | **CSV** | `data/output/run_20260527_123946/knowledge_graph.nt` |
 
 All three are evaluated against the **same gold standard**:  
