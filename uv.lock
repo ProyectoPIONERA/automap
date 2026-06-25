@@ -58,6 +58,47 @@ wheels = [
 ]
 
 [[package]]
+name = "automap"
+version = "1.0.0rc1"
+source = { virtual = "." }
+dependencies = [
+    { name = "dotenv" },
+    { name = "langchain" },
+    { name = "langchain-openai" },
+    { name = "langgraph" },
+    { name = "langgraph-api" },
+    { name = "langgraph-cli" },
+    { name = "morph-kgc" },
+    { name = "pandas" },
+    { name = "plotly" },
+    { name = "pyoxigraph" },
+    { name = "pyshacl" },
+    { name = "pyyaml" },
+    { name = "rdflib" },
+    { name = "streamlit" },
+    { name = "yatter" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "dotenv", specifier = ">=0.9.9" },
+    { name = "langchain", specifier = ">=1.2.10" },
+    { name = "langchain-openai", specifier = ">=1.1.10" },
+    { name = "langgraph", specifier = ">=1.0.9" },
+    { name = "langgraph-api", specifier = ">=0.7.60" },
+    { name = "langgraph-cli", specifier = ">=0.2.6" },
+    { name = "morph-kgc", specifier = ">=2.3.1" },
+    { name = "pandas", specifier = ">=2.2.0" },
+    { name = "plotly", specifier = ">=6.0.0" },
+    { name = "pyoxigraph", specifier = ">=0.3.22" },
+    { name = "pyshacl", specifier = ">=0.31.0" },
+    { name = "pyyaml", specifier = ">=6.0" },
+    { name = "rdflib", specifier = ">=7.6.0" },
+    { name = "streamlit", specifier = ">=1.45.0" },
+    { name = "yatter", specifier = ">=2.0.3" },
+]
+
+[[package]]
 name = "blinker"
 version = "1.9.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1023,47 +1064,6 @@ otel = [
     { name = "opentelemetry-api" },
     { name = "opentelemetry-exporter-otlp-proto-http" },
     { name = "opentelemetry-sdk" },
-]
-
-[[package]]
-name = "llm-agents-rml"
-version = "0.1.0"
-source = { virtual = "." }
-dependencies = [
-    { name = "dotenv" },
-    { name = "langchain" },
-    { name = "langchain-openai" },
-    { name = "langgraph" },
-    { name = "langgraph-api" },
-    { name = "langgraph-cli" },
-    { name = "morph-kgc" },
-    { name = "pandas" },
-    { name = "plotly" },
-    { name = "pyoxigraph" },
-    { name = "pyshacl" },
-    { name = "pyyaml" },
-    { name = "rdflib" },
-    { name = "streamlit" },
-    { name = "yatter" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "dotenv", specifier = ">=0.9.9" },
-    { name = "langchain", specifier = ">=1.2.10" },
-    { name = "langchain-openai", specifier = ">=1.1.10" },
-    { name = "langgraph", specifier = ">=1.0.9" },
-    { name = "langgraph-api", specifier = ">=0.7.60" },
-    { name = "langgraph-cli", specifier = ">=0.2.6" },
-    { name = "morph-kgc", specifier = ">=2.3.1" },
-    { name = "pandas", specifier = ">=2.2.0" },
-    { name = "plotly", specifier = ">=6.0.0" },
-    { name = "pyoxigraph", specifier = ">=0.3.22" },
-    { name = "pyshacl", specifier = ">=0.31.0" },
-    { name = "pyyaml", specifier = ">=6.0" },
-    { name = "rdflib", specifier = ">=7.6.0" },
-    { name = "streamlit", specifier = ">=1.45.0" },
-    { name = "yatter", specifier = ">=2.0.3" },
 ]
 
 [[package]]

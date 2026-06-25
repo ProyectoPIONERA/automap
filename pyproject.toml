@@ -1,6 +1,6 @@
 [project]
 name = "automap"
-version = "1.0.0"
+version = "1.0.0-rc.1"
 description = "An agentic multi-agent pipeline using LangGraph to automate YARRRML mappings and Knowledge Graph materialization."
 readme = "README.md"
 requires-python = ">=3.12"
