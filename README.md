@@ -2,8 +2,6 @@
 
 **Agentic Knowledge Graph Generation**
 
-**Project Status: Under Development** This project is currently in an active development phase.
-
 ## Overview
 
 **Automap** is an agentic pipeline that leverages Large Language Models (LLMs) and [**LangGraph**](https://www.langchain.com/langgraph) to automate the creation of RML mappings and Knowledge Graph materialisation. The system uses a decentralised multi-agent architecture to analyse CSV schemas, scout ontologies, align schemas, generate Competency Questions (CQs), iteratively refine YARRRML mappings, and validate the final KG with both SPARQL and SHACL — all without manual intervention.
