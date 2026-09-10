@@ -1,0 +1,77 @@
+<http://dbpedia.org/ontology/Actor/nm0000101> <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#orderIn> "3"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://dbpedia.org/ontology/Actor/nm0021607> <http://dbpedia.org/ontology/birthYear> "1979"^^<http://www.w3.org/2001/XMLSchema#gYear> .
+<http://dbpedia.org/ontology/Actor/nm0000002> <http://dbpedia.org/ontology/birthYear> "1924"^^<http://www.w3.org/2001/XMLSchema#gYear> .
+<http://dbpedia.org/ontology/Actor/nm0441631> <http://dbpedia.org/ontology/profession> "writer" .
+<http://dbpedia.org/ontology/Film/tt0167423> <http://dbpedia.org/ontology/starring> "nm0000018" .
+<http://dbpedia.org/ontology/Actor/nm0002706> <http://dbpedia.org/ontology/profession> "editor" .
+<http://dbpedia.org/ontology/Actor/nm0021607> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Actor> .
+<http://dbpedia.org/ontology/Actor/nm0002706> <http://dbpedia.org/ontology/film> <http://dbpedia.org/ontology/Film/tt0167423> .
+<http://dbpedia.org/ontology/Actor/nm0038875> <http://dbpedia.org/ontology/birthYear> "1971"^^<http://www.w3.org/2001/XMLSchema#gYear> .
+<http://dbpedia.org/ontology/Actor/nm0000101> <http://dbpedia.org/ontology/name> "Dan Aykroyd" .
+<http://dbpedia.org/ontology/Actor/nm0000101> <http://dbpedia.org/ontology/profession> "actor" .
+<http://dbpedia.org/ontology/Actor/nm4500812> <http://dbpedia.org/ontology/profession> "producer" .
+<http://dbpedia.org/ontology/Film/tt0167423> <http://dbpedia.org/ontology/title> "Diamonds" .
+<http://dbpedia.org/ontology/Actor/nm0002706> <http://dbpedia.org/ontology/name> "David L. Bertman" .
+<http://dbpedia.org/ontology/Film/tt0167423> <http://dbpedia.org/ontology/starring> "nm0021607" .
+<http://dbpedia.org/ontology/Film/tt0167423> <http://dbpedia.org/ontology/starring> "nm0441631" .
+<http://dbpedia.org/ontology/Actor/nm0441631> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Actor> .
+<http://dbpedia.org/ontology/Actor/nm0000018> <http://dbpedia.org/ontology/film> <http://dbpedia.org/ontology/Film/tt0167423> .
+<http://dbpedia.org/ontology/Film/tt0167423> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Film> .
+<http://dbpedia.org/ontology/Actor/nm0038875> <http://dbpedia.org/ontology/film> <http://dbpedia.org/ontology/Film/tt0167423> .
+<http://dbpedia.org/ontology/Actor/nm0000101> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Actor> .
+<http://dbpedia.org/ontology/Actor/nm4500812> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Actor> .
+<http://dbpedia.org/ontology/Actor/nm0038875> <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#orderIn> "5"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://dbpedia.org/ontology/Film/tt0167423> <http://dbpedia.org/ontology/starring> "nm0254580" .
+<http://dbpedia.org/ontology/Actor/nm0254580> <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#orderIn> "9"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://dbpedia.org/ontology/Actor/nm0441631> <http://dbpedia.org/ontology/name> "Allan Aaron Katz" .
+<http://dbpedia.org/ontology/Actor/nm0000018> <http://dbpedia.org/ontology/deathYear> "2020.0"^^<http://www.w3.org/2001/XMLSchema#float> .
+<http://dbpedia.org/ontology/Film/tt0167423> <http://dbpedia.org/ontology/starring> "nm4500812" .
+<http://dbpedia.org/ontology/Actor/nm0006107> <http://dbpedia.org/ontology/deathYear> "2012.0"^^<http://www.w3.org/2001/XMLSchema#float> .
+<http://dbpedia.org/ontology/Actor/nm0441631> <http://dbpedia.org/ontology/film> <http://dbpedia.org/ontology/Film/tt0167423> .
+<http://dbpedia.org/ontology/Actor/nm0006107> <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#orderIn> "8"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://dbpedia.org/ontology/Actor/nm0000002> <http://dbpedia.org/ontology/name> "Lauren Bacall" .
+<http://dbpedia.org/ontology/Film/tt0167423> <http://dbpedia.org/ontology/starring> "nm0000101" .
+<http://dbpedia.org/ontology/Actor/nm0000002> <http://dbpedia.org/ontology/profession> "actress" .
+<http://dbpedia.org/ontology/Actor/nm0254580> <http://dbpedia.org/ontology/profession> "cinematographer" .
+<http://dbpedia.org/ontology/Actor/nm0000018> <http://dbpedia.org/ontology/birthYear> "1916"^^<http://www.w3.org/2001/XMLSchema#gYear> .
+<http://dbpedia.org/ontology/Actor/nm0254580> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Actor> .
+<http://dbpedia.org/ontology/Actor/nm0441631> <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#orderIn> "6"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://dbpedia.org/ontology/Actor/nm0000101> <http://dbpedia.org/ontology/birthYear> "1952"^^<http://www.w3.org/2001/XMLSchema#gYear> .
+<http://dbpedia.org/ontology/Actor/nm0000002> <http://dbpedia.org/ontology/deathYear> "2014.0"^^<http://www.w3.org/2001/XMLSchema#float> .
+<http://dbpedia.org/ontology/Film/tt0167423> <http://dbpedia.org/ontology/genre> "Comedy, Mystery" .
+<http://dbpedia.org/ontology/Film/tt0167423> <http://dbpedia.org/ontology/startYear> "1999"^^<http://www.w3.org/2001/XMLSchema#gYear> .
+<http://dbpedia.org/ontology/Actor/nm0254580> <http://dbpedia.org/ontology/film> <http://dbpedia.org/ontology/Film/tt0167423> .
+<http://dbpedia.org/ontology/Actor/nm0038875> <http://dbpedia.org/ontology/profession> "director" .
+<http://dbpedia.org/ontology/Actor/nm0000018> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Actor> .
+<http://dbpedia.org/ontology/Film/tt0167423> <http://dbpedia.org/ontology/type> "movie" .
+<http://dbpedia.org/ontology/Film/tt0167423> <http://dbpedia.org/ontology/runtime> "91.0"^^<http://www.w3.org/2001/XMLSchema#double> .
+<http://dbpedia.org/ontology/Actor/nm0006107> <http://dbpedia.org/ontology/profession> "composer" .
+<http://dbpedia.org/ontology/Actor/nm0006107> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Actor> .
+<http://dbpedia.org/ontology/Actor/nm0038875> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Actor> .
+<http://dbpedia.org/ontology/Actor/nm4500812> <http://dbpedia.org/ontology/name> "Patricia Green" .
+<http://dbpedia.org/ontology/Actor/nm0000002> <http://dbpedia.org/ontology/film> <http://dbpedia.org/ontology/Film/tt0167423> .
+<http://dbpedia.org/ontology/Actor/nm0006107> <http://dbpedia.org/ontology/name> "Joel Goldsmith" .
+<http://dbpedia.org/ontology/Actor/nm0006107> <http://dbpedia.org/ontology/birthYear> "1957"^^<http://www.w3.org/2001/XMLSchema#gYear> .
+<http://dbpedia.org/ontology/Actor/nm0006107> <http://dbpedia.org/ontology/film> <http://dbpedia.org/ontology/Film/tt0167423> .
+<http://dbpedia.org/ontology/Actor/nm0021607> <http://dbpedia.org/ontology/film> <http://dbpedia.org/ontology/Film/tt0167423> .
+<http://dbpedia.org/ontology/Actor/nm0000002> <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#orderIn> "2"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://dbpedia.org/ontology/Film/tt0167423> <http://dbpedia.org/ontology/starring> "nm0006107" .
+<http://dbpedia.org/ontology/Film/tt0167423> <http://dbpedia.org/ontology/starring> "nm0038875" .
+<http://dbpedia.org/ontology/Actor/nm0000018> <http://dbpedia.org/ontology/name> "Kirk Douglas" .
+<http://dbpedia.org/ontology/Film/tt0167423> <http://schema.org/isAccessibleForFree> "false"^^<http://www.w3.org/2001/XMLSchema#boolean> .
+<http://dbpedia.org/ontology/Actor/nm0000018> <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#orderIn> "1"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://dbpedia.org/ontology/Actor/nm4500812> <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#orderIn> "7"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://dbpedia.org/ontology/Actor/nm0254580> <http://dbpedia.org/ontology/name> "Paul Elliott" .
+<http://dbpedia.org/ontology/Actor/nm0000018> <http://dbpedia.org/ontology/profession> "actor" .
+<http://dbpedia.org/ontology/Actor/nm0038875> <http://dbpedia.org/ontology/name> "John Asher" .
+<http://dbpedia.org/ontology/Actor/nm0021607> <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#orderIn> "4"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://dbpedia.org/ontology/Actor/nm0002706> <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#orderIn> "10"^^<http://www.w3.org/2001/XMLSchema#integer> .
+<http://dbpedia.org/ontology/Actor/nm0021607> <http://dbpedia.org/ontology/profession> "actor" .
+<http://dbpedia.org/ontology/Actor/nm0002706> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Actor> .
+<http://dbpedia.org/ontology/Actor/nm0000101> <http://dbpedia.org/ontology/film> <http://dbpedia.org/ontology/Film/tt0167423> .
+<http://dbpedia.org/ontology/Actor/nm0021607> <http://dbpedia.org/ontology/name> "Corbin Allred" .
+<http://dbpedia.org/ontology/Film/tt0167423> <http://dbpedia.org/ontology/starring> "nm0000002" .
+<http://dbpedia.org/ontology/Actor/nm4500812> <http://dbpedia.org/ontology/film> <http://dbpedia.org/ontology/Film/tt0167423> .
+<http://dbpedia.org/ontology/Film/tt0167423> <http://dbpedia.org/ontology/starring> "nm0002706" .
+<http://dbpedia.org/ontology/Film/tt0167423> <http://dbpedia.org/ontology/originalTitle> "Diamonds" .
+<http://dbpedia.org/ontology/Actor/nm0000002> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Actor> .

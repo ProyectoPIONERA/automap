@@ -1,0 +1,36 @@
+prefixes:
+  dul: "http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#"
+  schema: "http://schema.org/"
+  dbp: "http://dbpedia.org/ontology/"
+  xsd: "http://www.w3.org/2001/XMLSchema#"
+  rdf: "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+  rdfs: "http://www.w3.org/2000/01/rdf-schema#"
+
+mappings:
+  FilmMapping:
+    sources:
+      - [data/input/hofer-imdb/diamond/movie_data.csv~csv]
+    s: dbp:Film/$(movie_id)
+    po:
+      - [a, dbp:Film]
+      - [dbp:title, $(primaryTitle), xsd:string]
+      - [dbp:originalTitle, $(originalTitle), xsd:string]
+      - [dbp:startYear, $(startYear), xsd:gYear]
+      - [dbp:runtime, $(runtimeMinutes), xsd:double]
+      - [dbp:genre, $(genres), xsd:string]
+      - [schema:isAccessibleForFree, $(isAdult), xsd:boolean]
+      - [dbp:type, $(titleType), xsd:string]
+      - [dbp:starring, $(person_id), xsd:string]
+
+  ActorMapping:
+    sources:
+      - [data/input/hofer-imdb/diamond/movie_data.csv~csv]
+    s: dbp:Actor/$(person_id)
+    po:
+      - [a, dbp:Actor]
+      - [dbp:name, $(primaryName), xsd:string]
+      - [dbp:profession, $(category), xsd:string]
+      - [dul:orderIn, $(ordering), xsd:integer]
+      - [dbp:birthYear, $(birthYear), xsd:gYear]
+      - [dbp:deathYear, $(deathYear), xsd:float]
+      - [dbp:film, dbp:Film/$(movie_id)~iri]

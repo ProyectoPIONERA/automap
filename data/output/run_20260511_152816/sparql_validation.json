@@ -1,0 +1,58 @@
+[
+  {
+    "cq": "Which movies exist in the dataset?",
+    "sparql": "PREFIX dul: <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX schema: <http://schema.org/>\nPREFIX dbp: <http://dbpedia.org/ontology/>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n\nASK {\n  ?film a dbp:Film .\n}",
+    "passed": true,
+    "diagnosis": "",
+    "source": "generated_cq"
+  },
+  {
+    "cq": "What is the runtime of a given movie (e.g., Diamonds)?",
+    "sparql": "PREFIX dul: <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX schema: <http://schema.org/>\nPREFIX dbp: <http://dbpedia.org/ontology/>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n\nASK {\n  ?movie a dbp:Film ;\n          dbp:title \"Diamonds\" ;\n          dbp:runtime ?runtime .\n}",
+    "passed": true,
+    "diagnosis": "",
+    "source": "generated_cq"
+  },
+  {
+    "cq": "Who are the actors in a specific movie (e.g., Diamonds)?",
+    "sparql": "PREFIX dbp: <http://dbpedia.org/ontology/>\nPREFIX dul: <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX schema: <http://schema.org/>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n\nASK {\n  ?actor a dbp:Actor ;\n         dbp:starring ?movie .\n  ?movie dbp:title \"Diamonds\" .\n}",
+    "passed": false,
+    "diagnosis": "ASK returned false. Missing: ?actor a dbp:Actor ;\n         dbp:starring ?movie .\n  ?movie dbp:title \"Diamonds\" .",
+    "source": "generated_cq"
+  },
+  {
+    "cq": "In which year was a particular actor born (e.g., Kirk Douglas)?",
+    "sparql": "PREFIX dul: <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX schema: <http://schema.org/>\nPREFIX dbp: <http://dbpedia.org/ontology/>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n\nASK {\n  ?actor a dbp:Actor ;\n         dbp:birthYear ?year .\n}",
+    "passed": true,
+    "diagnosis": "",
+    "source": "generated_cq"
+  },
+  {
+    "cq": "What is the genre of a certain movie (e.g., Diamonds)?",
+    "sparql": "PREFIX dul: <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX schema: <http://schema.org/>\nPREFIX dbp: <http://dbpedia.org/ontology/>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n\nASK {\n  ?movie a dbp:Film ;\n          dbp:title \"Diamonds\" ;\n          dbp:genre ?genre .\n}",
+    "passed": true,
+    "diagnosis": "",
+    "source": "generated_cq"
+  },
+  {
+    "cq": "Which movies were released in a specific year (e.g., 1999)?",
+    "sparql": "PREFIX dul: <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX schema: <http://schema.org/>\nPREFIX dbp: <http://dbpedia.org/ontology/>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n\nASK {\n  ?film a dbp:Film ;\n         dbp:startYear ?year .\n}",
+    "passed": true,
+    "diagnosis": "",
+    "source": "generated_cq"
+  },
+  {
+    "cq": "Who are the actresses who played alongside a particular actor (e.g., Kirk Douglas) in a movie (e.g., Diamonds)?",
+    "sparql": "PREFIX dbp: <http://dbpedia.org/ontology/>\nPREFIX dul: <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX schema: <http://schema.org/>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n\nASK {\n  ?actress a dbp:Actor ;\n           dbp:starring ?movie .\n  ?movie dbp:title \"Diamonds\" ;\n          dbp:starring ?actor .\n  ?actor dbp:name \"Kirk Douglas\" .\n}",
+    "passed": false,
+    "diagnosis": "ASK returned false. Missing: ?actress a dbp:Actor ;\n           dbp:starring ?movie .\n  ?movie dbp:title \"Diamonds\" ;\n          dbp:starring ?actor .\n  ?actor dbp:name \"Kirk Douglas\" .",
+    "source": "generated_cq"
+  },
+  {
+    "cq": "What is the death year of an actor or actress from the dataset (e.g., Lauren Bacall)?",
+    "sparql": "PREFIX dbp: <http://dbpedia.org/ontology/>\nPREFIX dul: <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX schema: <http://schema.org/>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n\nASK {\n  ?actor a dbp:Actor ;\n         dbp:deathYear ?deathYear .\n}",
+    "passed": true,
+    "diagnosis": "",
+    "source": "generated_cq"
+  }
+]

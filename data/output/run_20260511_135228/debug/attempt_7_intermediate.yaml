@@ -1,0 +1,45 @@
+prefixes:
+  dbo: "http://dbpedia.org/ontology/"
+  dcterms: "http://purl.org/dc/terms/"
+  foaf: "http://xmlns.com/foaf/0.1/"
+  schema: "https://schema.org/"
+  xsd: "http://www.w3.org/2001/XMLSchema#"
+  lkg: "http://mykg.org/resource/"
+
+mappings:
+  FilmMapping:
+    sources:
+      - [data/input/hofer-imdb/diamond/movie_data.csv~csv]
+    s: dbo:Film/$(movie_id)
+    po:
+      - [a, dbo:Film]
+      - [dcterms:title, $(primaryTitle), xsd:string]
+      - [schema:name, $(originalTitle), xsd:string]
+      - [schema:datePublished, $(startYear), xsd:gYear]
+      - [dbo:runtime, $(runtimeMinutes), xsd:integer]
+      - [lkg:metadata, dbo:Film/$(movie_id)/Metadata~iri]
+  PersonMapping:
+    sources:
+      - [data/input/hofer-imdb/diamond/movie_data.csv~csv]
+    s: dbo:Person/$(person_id)
+    po:
+      - [a, dbo:Person]
+      - [foaf:name, $(primaryName), xsd:string]
+      - [schema:birthDate, $(birthYear), xsd:gYear]
+      - [schema:deathDate, $(deathYear), xsd:gYear]
+  FilmPersonMapping:
+    sources:
+      - [data/input/hofer-imdb/diamond/movie_data.csv~csv]
+    s: dbo:Film/$(movie_id)
+    po:
+      - [a, dbo:Film]
+      - [schema:actor, dbo:Person/$(person_id)~iri]
+  FilmMetadataMapping:
+    sources:
+      - [data/input/hofer-imdb/diamond/movie_data.csv~csv]
+    s: dbo:Film/$(movie_id)/Metadata
+    po:
+      - [a, dbo:FilmMetadata]
+      - [schema:titleType, $(titleType), xsd:string]
+      - [schema:isAdult, $(isAdult), xsd:boolean]
+      - [schema:genre, $(genres), xsd:string]

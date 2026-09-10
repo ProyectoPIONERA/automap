@@ -1,0 +1,171 @@
+# SPARQL CQ Validation Report
+# Generated: 2026-05-11T13:54:28.080764
+# Retry: 0
+# Total checks: 10
+
+[1] PASS  [generated_cq]
+  CQ      : Which movies exist in the dataset?
+  SPARQL  :
+    PREFIX dbo: <http://dbpedia.org/ontology/>
+    PREFIX ex: <http://example.org/>
+    PREFIX lkg: <http://mykg.org/resource/>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    
+    ASK {
+      ?movie a dbo:Film .
+    }
+
+[2] PASS  [generated_cq]
+  CQ      : What is the runtime of a given movie?
+  SPARQL  :
+    PREFIX dbo: <http://dbpedia.org/ontology/>
+    PREFIX ex: <http://example.org/>
+    PREFIX lkg: <http://mykg.org/resource/>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    
+    ASK {
+      ?movie a dbo:Film ;
+             dbo:runtime ?runtime .
+    }
+
+[3] PASS  [generated_cq]
+  CQ      : Which actors are involved in a specific movie?
+  SPARQL  :
+    PREFIX dbo: <http://dbpedia.org/ontology/>
+    PREFIX ex: <http://example.org/>
+    PREFIX lkg: <http://mykg.org/resource/>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    
+    ASK {
+      ?movie a dbo:Film ;
+             dbo:title ?title .
+      ?actor a dbo:Person ;
+             dbo:name ?name .
+      ?movie dbo:starring ?actor .
+    }
+
+[4] PASS  [generated_cq]
+  CQ      : How many years ago did a particular person die?
+  SPARQL  :
+    PREFIX dbo: <http://dbpedia.org/ontology/>
+    PREFIX ex: <http://example.org/>
+    PREFIX lkg: <http://mykg.org/resource/>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    
+    ASK {
+      ?person a dbo:Person ;
+              dbo:deathYear ?deathYear .
+    }
+
+[5] PASS  [generated_cq]
+  CQ      : What is the original title of a given film?
+  SPARQL  :
+    PREFIX dbo: <http://dbpedia.org/ontology/>
+    PREFIX ex: <http://example.org/>
+    PREFIX lkg: <http://mykg.org/resource/>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    
+    ASK {
+      ?film a dbo:Film ;
+            dbo:originalTitle ?title .
+    }
+
+[6] PASS  [generated_cq]
+  CQ      : Which films have a specific genre?
+  SPARQL  :
+    PREFIX dbo: <http://dbpedia.org/ontology/>
+    PREFIX ex: <http://example.org/>
+    PREFIX lkg: <http://mykg.org/resource/>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    
+    ASK {
+      ?film a dbo:Film ;
+            dbo:genre ?genre .
+    }
+
+[7] FAIL  [generated_cq]
+  CQ      : Who directed a particular movie?
+  SPARQL  :
+    PREFIX dbo: <http://dbpedia.org/ontology/>
+    PREFIX ex: <http://example.org/>
+    PREFIX lkg: <http://mykg.org/resource/>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    
+    ASK {
+      ?movie a dbo:Film ;
+             lkg:metadata ?metadata .
+      ?metadata ex:category "directed by" ;
+                ex:ordering ?directorName .
+    }
+  Diagnosis: ASK returned false. Missing: ?movie a dbo:Film ;
+         lkg:metadata ?metadata .
+  ?metadata ex:category "directed by" ;
+            ex:ordering ?directorName .
+
+[8] FAIL  [generated_cq]
+  CQ      : What is the birth year of an actor named Kirk Douglas?
+  SPARQL  :
+    PREFIX dbo: <http://dbpedia.org/ontology/>
+    PREFIX ex: <http://example.org/>
+    PREFIX lkg: <http://mykg.org/resource/>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    
+    ASK {
+      ?actor a dbo:Person ;
+             dbo:name "Kirk Douglas" ;
+             dbo:birthYear ?birthYear .
+    }
+  Diagnosis: ASK returned false. Missing: ?actor a dbo:Person ;
+         dbo:name "Kirk Douglas" ;
+         dbo:birthYear ?birthYear .
+
+[9] PASS  [generated_cq]
+  CQ      : Which movies were released in a specific year?
+  SPARQL  :
+    PREFIX dbo: <http://dbpedia.org/ontology/>
+    PREFIX ex: <http://example.org/>
+    PREFIX lkg: <http://mykg.org/resource/>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    
+    ASK {
+      ?movie a dbo:Film ;
+             dbo:startYear ?year .
+    }
+
+[10] FAIL  [generated_cq]
+  CQ      : How many minutes long is the movie "Diamonds"?
+  SPARQL  :
+    PREFIX dbo: <http://dbpedia.org/ontology/>
+    PREFIX ex: <http://example.org/>
+    PREFIX lkg: <http://mykg.org/resource/>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    
+    ASK {
+      ?movie a dbo:Film ;
+             dbo:title "Diamonds" ;
+             dbo:runtime ?runtime .
+    }
+  Diagnosis: ASK returned false. Missing: ?movie a dbo:Film ;
+         dbo:title "Diamonds" ;
+         dbo:runtime ?runtime .
+

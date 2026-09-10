@@ -1,0 +1,7 @@
+prefixes:
+  dbo: "http://dbpedia.org/ontology/"
+  dcterms: "http://purl.org/dc/terms/"
+  foaf: "http://xmlns.com/foaf/0.1/"
+  schema: "https://schema.org/"
+  xsd: "http://www.w3.org/2001/XMLSchema#"
+  lkg: "http://mykg.org/resource/"

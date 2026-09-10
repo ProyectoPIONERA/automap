@@ -1,0 +1,18 @@
+--- attempt_1.yaml
++++ attempt_2.yaml
+@@ -1,4 +1,5 @@
+ prefixes:
++  ex: "http://example.com/ex#"
+   dbo: "http://dbpedia.org/ontology/"
+   xsd: "http://www.w3.org/2001/XMLSchema#"
+   lkg: "http://mykg.org/resource/"
+@@ -15,7 +16,8 @@
+       - [dbo:startYear, $(startYear), xsd:gYear]
+       - [dbo:runtime, $(runtimeMinutes), xsd:minute]
+       - [dbo:genre, $(genres), xsd:langString]
+-      - [dbo:starring, http://mykg.org/resource/Person/$(person_id)~iri]
++      - [ex:category, $(category), xsd:string]
++      - [ex:ordering, $(ordering), xsd:string]
+       - [lkg:metadata, http://mykg.org/resource/Film/$(movie_id)/Metadata~iri]
+ 
+   PersonMapping:

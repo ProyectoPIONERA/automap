@@ -1,0 +1,15 @@
+Which transactions are flagged as fraudulent?
+Which cardholders have made more than 3 fraudulent transactions?
+What is the total amount involved in fraudulent transactions per merchant category?
+
+What is the job and date of birth of the cardholder who made a given transaction?
+Which cardholders live in a city with a population greater than 100,000?
+
+Which merchants have the highest number of fraud-flagged transactions?
+What merchant categories are most associated with fraud?
+
+Which transactions occurred where the cardholder's location and merchant location are more than 50km apart?
+Which fraudulent transactions happened in a specific US state (e.g., SC)?
+
+How many transactions occurred within the same hour across all cardholders?
+Which cardholder made multiple transactions within a 10-minute window?

@@ -1,0 +1,55 @@
+prefixes:
+  ex: "http://example.org/"
+  dbo: "http://dbpedia.org/ontology/"
+  dcterms: "http://purl.org/dc/terms/"
+  foaf: "http://xmlns.com/foaf/0.1/"
+  schema: "http://schema.org/"
+  xsd: "http://www.w3.org/2001/XMLSchema#"
+  lkg: "http://mykg.org/resource/"
+  mykg: "http://mykg.org/resource/"
+
+mappings:
+  FilmMapping:
+    sources:
+      - [data/input/hofer-imdb/diamond/movie_data.csv~csv]
+    s: mykg:Film/$(movie_id)
+    po:
+      - [a, dbo:Film]
+      - [dcterms:title, $(primaryTitle), xsd:string]
+      - [schema:name, $(originalTitle), xsd:string]
+      - [schema:datePublished, $(startYear), xsd:gYear]
+      - [dbo:runtime, $(runtimeMinutes), xsd:integer]
+      - [lkg:metadata, dbo:Film/$(movie_id)/Metadata~iri]
+      - [ex:hasPerson, mykg:Person/$(person_id)~iri]
+      - [ex:hasFilmPerson, mykg:Film/$(movie_id)~iri]
+      - [ex:hasFilmMetadata, mykg:Film/$(movie_id)/Metadata~iri]
+      - [ex:category, $(category), xsd:string]
+      - [ex:ordering, $(ordering), xsd:string]
+
+  PersonMapping:
+    sources:
+      - [data/input/hofer-imdb/diamond/movie_data.csv~csv]
+    s: mykg:Person/$(person_id)
+    po:
+      - [a, dbo:Person]
+      - [foaf:name, $(primaryName), xsd:string]
+      - [schema:birthDate, $(birthYear), xsd:gYear]
+      - [schema:deathDate, $(deathYear), xsd:gYear]
+
+  FilmPersonMapping:
+    sources:
+      - [data/input/hofer-imdb/diamond/movie_data.csv~csv]
+    s: mykg:Film/$(movie_id)
+    po:
+      - [a, dbo:Film]
+      - [schema:actor, dbo:Person/$(person_id)~iri]
+
+  FilmMetadataMapping:
+    sources:
+      - [data/input/hofer-imdb/diamond/movie_data.csv~csv]
+    s: mykg:Film/$(movie_id)/Metadata
+    po:
+      - [a, dbo:FilmMetadata]
+      - [schema:titleType, $(titleType), xsd:string]
+      - [schema:isAdult, $(isAdult), xsd:boolean]
+      - [schema:genre, $(genres), xsd:string]

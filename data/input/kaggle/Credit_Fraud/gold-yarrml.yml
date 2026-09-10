@@ -1,0 +1,68 @@
+prefixes:
+  ex: "http://example.org/fraud#"
+  schema: "http://schema.org/"
+  xsd: "http://www.w3.org/2001/XMLSchema#"
+  geo: "http://www.w3.org/2003/01/geo/wgs84_pos#"
+  fibo: "https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/FinancialServicesEntities/"
+
+mappings:
+  cardholder:
+    sources:
+      - ['fraudTest.csv~csv']
+    s: ex:cardholder/$(cc_num)
+    po:
+      - [a, schema:Person]
+      - [schema:givenName, $(first)]
+      - [schema:familyName, $(last)]
+      - [schema:gender, $(gender)]
+      - [schema:birthDate, $(dob), xsd:date]
+      - [schema:jobTitle, $(job)]
+      - [schema:address, ex:address/$(cc_num)~iri]
+
+  address:
+    sources:
+      - ['fraudTest.csv~csv']
+    s: ex:address/$(cc_num)
+    po:
+      - [a, schema:PostalAddress]
+      - [schema:streetAddress, $(street)]
+      - [schema:addressLocality, $(city)]
+      - [schema:addressRegion, $(state)]
+      - [schema:postalCode, $(zip)]
+      - [geo:lat, $(lat), xsd:decimal]
+      - [geo:long, $(long), xsd:decimal]
+
+  merchant:
+    sources:
+      - ['fraudTest.csv~csv']
+    s: ex:merchant/$(merchant)
+    po:
+      - [a, ex:Merchant]
+      - [schema:name, $(merchant)]
+      - [ex:merchantCategory, $(category)]
+      - [geo:lat, $(merch_lat), xsd:decimal]
+      - [geo:long, $(merch_long), xsd:decimal]
+
+  transaction:
+    sources:
+      - ['fraudTest.csv~csv']
+    s: ex:transaction/$(trans_num)
+    po:
+      - [a, ex:CreditCardTransaction]
+      - [ex:transactionId, $(trans_num)]
+      - [ex:transactionDateTime, $(trans_date_trans_time), xsd:dateTime]
+      - [ex:unixTime, $(unix_time), xsd:long]
+      - [ex:amount, $(amt), xsd:decimal]
+      - [ex:isFraud, $(is_fraud), xsd:boolean]
+      - [ex:madeBy, ex:cardholder/$(cc_num)~iri]
+      - [ex:atMerchant, ex:merchant/$(merchant)~iri]
+      - [ex:usesCard, ex:creditcard/$(cc_num)~iri]
+
+  creditcard:
+    sources:
+      - ['fraudTest.csv~csv']
+    s: ex:creditcard/$(cc_num)
+    po:
+      - [a, ex:CreditCard]
+      - [ex:cardNumber, $(cc_num), xsd:long]
+      - [ex:heldBy, ex:cardholder/$(cc_num)~iri]

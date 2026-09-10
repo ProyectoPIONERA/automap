@@ -1,0 +1,35 @@
+--- attempt_5.yaml
++++ attempt_6.yaml
+@@ -15,18 +15,8 @@
+       - [dbo:startYear, $(startYear), xsd:gYear]
+       - [dbo:runtime, $(runtimeMinutes), xsd:minute]
+       - [dbo:genre, $(genres), xsd:langString]
+-      - [dbo:isAdult, $(isAdult), xsd:boolean]
+-      - [dbo:titleType, $(titleType), xsd:string]
++      - [dbo:starring, http://mykg.org/resource/Person/$(person_id)~iri]
+       - [lkg:metadata, http://mykg.org/resource/Film/$(movie_id)/Metadata~iri]
+-
+-  FilmMetadataMapping:
+-    sources:
+-      - [data/input/hofer-imdb/diamond/movie_data.csv~csv]
+-    s: http://mykg.org/resource/Film/$(movie_id)/Metadata
+-    po:
+-      - [a, <http://dbpedia.org/ontology/Film>]
+-      - [dbo:isAdult, $(isAdult), xsd:boolean]
+-      - [dbo:titleType, $(titleType), xsd:string]
+ 
+   PersonMapping:
+     sources:
+@@ -37,3 +27,12 @@
+       - [dbo:name, $(primaryName), xsd:langString]
+       - [dbo:birthYear, $(birthYear), xsd:gYear]
+       - [dbo:deathYear, $(deathYear), xsd:gYear]
++
++  FilmMetadataMapping:
++    sources:
++      - [data/input/hofer-imdb/diamond/movie_data.csv~csv]
++    s: http://mykg.org/resource/Film/$(movie_id)/Metadata
++    po:
++      - [a, <http://dbpedia.org/ontology/Film>]
++      - [dbo:isAdult, $(isAdult), xsd:boolean]
++      - [dbo:titleType, $(titleType), xsd:string]

@@ -1,0 +1,415 @@
+@prefix ex: <http://example.org/fraud#>.
+@prefix schema: <http://schema.org/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>.
+@prefix fibo: <https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/FinancialServicesEntities/>.
+@prefix rr: <http://www.w3.org/ns/r2rml#>.
+@prefix rml: <http://semweb.mmlab.be/ns/rml#>.
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix ql: <http://semweb.mmlab.be/ns/ql#>.
+@prefix d2rq: <http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#>.
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+@prefix formats: <http://www.w3.org/ns/formats/>.
+@prefix comp: <http://semweb.mmlab.be/ns/rml-compression#>.
+@prefix void: <http://rdfs.org/ns/void#>.
+@prefix fnml: <http://semweb.mmlab.be/ns/fnml#>.
+@prefix grel: <http://users.ugent.be/~bjdmeest/function/grel.ttl#>.
+@base <http://example.com/ns#>.
+
+
+<cardholder_0> a rr:TriplesMap;
+
+	rml:logicalSource [
+		a rml:LogicalSource;
+		rml:source "/home/naveen/Documents/LLM-Agents_RML/data/input/kaggle/Credit_Fraud/fraudTest.csv";
+		rml:referenceFormulation ql:CSV
+
+	];
+	rr:subjectMap [
+		a rr:SubjectMap;
+		rr:template "http://example.org/fraud#cardholder/{cc_num}";
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant rdf:type;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rr:constant schema:Person;
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant schema:givenName;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "first";
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant schema:familyName;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "last";
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant schema:gender;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "gender";
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant schema:birthDate;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "dob";
+			rr:datatype xsd:date
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant schema:jobTitle;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "job";
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant schema:address;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rr:template "http://example.org/fraud#address/{cc_num}";
+			rr:termType rr:IRI
+		];
+	].
+
+
+<address_0> a rr:TriplesMap;
+
+	rml:logicalSource [
+		a rml:LogicalSource;
+		rml:source "/home/naveen/Documents/LLM-Agents_RML/data/input/kaggle/Credit_Fraud/fraudTest.csv";
+		rml:referenceFormulation ql:CSV
+
+	];
+	rr:subjectMap [
+		a rr:SubjectMap;
+		rr:template "http://example.org/fraud#address/{cc_num}";
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant rdf:type;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rr:constant schema:PostalAddress;
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant schema:streetAddress;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "street";
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant schema:addressLocality;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "city";
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant schema:addressRegion;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "state";
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant schema:postalCode;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "zip";
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant geo:lat;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "lat";
+			rr:datatype xsd:decimal
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant geo:long;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "long";
+			rr:datatype xsd:decimal
+		];
+	].
+
+
+<merchant_0> a rr:TriplesMap;
+
+	rml:logicalSource [
+		a rml:LogicalSource;
+		rml:source "/home/naveen/Documents/LLM-Agents_RML/data/input/kaggle/Credit_Fraud/fraudTest.csv";
+		rml:referenceFormulation ql:CSV
+
+	];
+	rr:subjectMap [
+		a rr:SubjectMap;
+		rr:template "http://example.org/fraud#merchant/{merchant}";
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant rdf:type;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rr:constant ex:Merchant;
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant schema:name;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "merchant";
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant ex:merchantCategory;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "category";
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant geo:lat;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "merch_lat";
+			rr:datatype xsd:decimal
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant geo:long;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "merch_long";
+			rr:datatype xsd:decimal
+		];
+	].
+
+
+<transaction_0> a rr:TriplesMap;
+
+	rml:logicalSource [
+		a rml:LogicalSource;
+		rml:source "/home/naveen/Documents/LLM-Agents_RML/data/input/kaggle/Credit_Fraud/fraudTest.csv";
+		rml:referenceFormulation ql:CSV
+
+	];
+	rr:subjectMap [
+		a rr:SubjectMap;
+		rr:template "http://example.org/fraud#transaction/{trans_num}";
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant rdf:type;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rr:constant ex:CreditCardTransaction;
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant ex:transactionId;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "trans_num";
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant ex:transactionDateTime;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "trans_date_trans_time";
+			rr:datatype xsd:dateTime
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant ex:unixTime;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "unix_time";
+			rr:datatype xsd:long
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant ex:amount;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "amt";
+			rr:datatype xsd:decimal
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant ex:isFraud;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "is_fraud";
+			rr:datatype xsd:boolean
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant ex:madeBy;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rr:template "http://example.org/fraud#cardholder/{cc_num}";
+			rr:termType rr:IRI
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant ex:atMerchant;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rr:template "http://example.org/fraud#merchant/{merchant}";
+			rr:termType rr:IRI
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant ex:usesCard;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rr:template "http://example.org/fraud#creditcard/{cc_num}";
+			rr:termType rr:IRI
+		];
+	].
+
+
+<creditcard_0> a rr:TriplesMap;
+
+	rml:logicalSource [
+		a rml:LogicalSource;
+		rml:source "/home/naveen/Documents/LLM-Agents_RML/data/input/kaggle/Credit_Fraud/fraudTest.csv";
+		rml:referenceFormulation ql:CSV
+
+	];
+	rr:subjectMap [
+		a rr:SubjectMap;
+		rr:template "http://example.org/fraud#creditcard/{cc_num}";
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant rdf:type;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rr:constant ex:CreditCard;
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant ex:cardNumber;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "cc_num";
+			rr:datatype xsd:long
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant ex:heldBy;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rr:template "http://example.org/fraud#cardholder/{cc_num}";
+			rr:termType rr:IRI
+		];
+	].
+
+

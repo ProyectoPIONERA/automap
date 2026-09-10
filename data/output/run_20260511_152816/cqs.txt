@@ -1,0 +1,12 @@
+# Competency Questions (auto-generated)
+# Generated: 2026-05-11T15:29:10.192115
+# Total: 8
+
+1. Which movies exist in the dataset?
+2. What is the runtime of a given movie (e.g., Diamonds)?
+3. Who are the actors in a specific movie (e.g., Diamonds)?
+4. In which year was a particular actor born (e.g., Kirk Douglas)?
+5. What is the genre of a certain movie (e.g., Diamonds)?
+6. Which movies were released in a specific year (e.g., 1999)?
+7. Who are the actresses who played alongside a particular actor (e.g., Kirk Douglas) in a movie (e.g., Diamonds)?
+8. What is the death year of an actor or actress from the dataset (e.g., Lauren Bacall)?

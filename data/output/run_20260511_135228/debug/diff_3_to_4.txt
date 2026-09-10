@@ -1,0 +1,32 @@
+--- attempt_3.yaml
++++ attempt_4.yaml
+@@ -9,7 +9,7 @@
+       - [data/input/hofer-imdb/diamond/movie_data.csv~csv]
+     s: http://mykg.org/resource/Film/$(movie_id)
+     po:
+-      - [a, http://dbpedia.org/ontology/Film]
++      - [a, <http://dbpedia.org/ontology/Film>]
+       - [dbo:title, $(primaryTitle), xsd:langString]
+       - [dbo:originalTitle, $(originalTitle), xsd:langString]
+       - [dbo:startYear, $(startYear), xsd:gYear]
+@@ -22,16 +22,16 @@
+       - [data/input/hofer-imdb/diamond/movie_data.csv~csv]
+     s: http://mykg.org/resource/Film/$(movie_id)/Metadata
+     po:
+-      - [a, http://dbpedia.org/ontology/Film]
+-      - [isAdult, $(isAdult), xsd:boolean]
+-      - [titleType, $(titleType), xsd:langString]
++      - [a, <http://dbpedia.org/ontology/Film>]
++      - [dbo:isAdult, $(isAdult), xsd:boolean]
++      - [dbo:titleType, $(titleType), xsd:string]
+ 
+   PersonMapping:
+     sources:
+       - [data/input/hofer-imdb/diamond/movie_data.csv~csv]
+     s: http://mykg.org/resource/Person/$(person_id)
+     po:
+-      - [a, http://dbpedia.org/ontology/Person]
++      - [a, <http://dbpedia.org/ontology/Person>]
+       - [dbo:name, $(primaryName), xsd:langString]
+       - [dbo:birthYear, $(birthYear), xsd:gYear]
+       - [dbo:deathYear, $(deathYear), xsd:gYear]

@@ -1,0 +1,36 @@
+prefixes:
+  dbo: "http://dbpedia.org/ontology/"
+  xsd: "http://www.w3.org/2001/XMLSchema#"
+  lkg: "http://mykg.org/resource/"
+
+mappings:
+  FilmMapping:
+    sources:
+      - [data/input/hofer-imdb/diamond/movie_data.csv~csv]
+    s: http://mykg.org/resource/Film/$(movie_id)
+    po:
+      - [a, dbo:Film]
+      - [dbo:title, $(primaryTitle), xsd:langString]
+      - [dbo:originalTitle, $(originalTitle), xsd:langString]
+      - [dbo:startYear, $(startYear), xsd:gYear]
+      - [dbo:runtime, $(runtimeMinutes), xsd:minute]
+      - [dbo:genre, $(genres), xsd:langString]
+      - [dbo:starring, http://mykg.org/resource/Person/$(person_id)~iri]
+      - [lkg:metadata, http://mykg.org/resource/Film/$(movie_id)/Metadata~iri]
+  PersonMapping:
+    sources:
+      - [data/input/hofer-imdb/diamond/movie_data.csv~csv]
+    s: http://mykg.org/resource/Person/$(person_id)
+    po:
+      - [a, dbo:Person]
+      - [dbo:name, $(primaryName), xsd:langString]
+      - [dbo:birthYear, $(birthYear), xsd:gYear]
+      - [dbo:deathYear, $(deathYear), xsd:gYear]
+  FilmMetadataMapping:
+    sources:
+      - [data/input/hofer-imdb/diamond/movie_data.csv~csv]
+    s: http://mykg.org/resource/Film/$(movie_id)/Metadata
+    po:
+      - [a, dbo:Film]
+      - [lkg:isAdult, $(isAdult), xsd:boolean]
+      - [lkg:titleType, $(titleType), xsd:string]

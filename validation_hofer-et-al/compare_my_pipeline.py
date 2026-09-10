@@ -14,9 +14,12 @@ import json, os
 from rdflib import Graph
 from kg_core.metrics.metrics import RML_Evaluation, precision_score, recall_score, f1_score
 
-# ── Paths ─────────────────────────────────────────────────────────────────────
+# ── Configuration & Paths ─────────────────────────────────────────────────────
+LLM_MODEL       = "deepseek-r1-distill-qwen-14b"           # <-- Set your LLM model here
+RUN_ID          = "run_20260527_123946"    # <-- Set your run folder timestamp here
+
 GOLD_STANDARD   = "experiments/llm4rml/diamonds-json/diamonds-reference.nt"
-YOUR_KG         = "/home/naveen/Documents/LLM-Agents_RML/data/output/run_20260527_123946/knowledge_graph.nt"
+YOUR_KG         = f"/home/naveen/Documents/LLM-Agents_RML/data/output/{RUN_ID}/knowledge_graph.nt"
 RESEARCH_KG     = "experiments/llm4rml/diamonds-json/gpt-4-0125-preview_101.ttl.nt"   # research pipeline output = gold standard
 
 
@@ -85,7 +88,7 @@ with warnings.catch_warnings():
         YOUR_KG,
         GOLD_STANDARD,
         base_iri="http://mykg.org/resource/",
-        label="Your pipeline (Qwen 2.5 14B)"
+        label=f"Your pipeline ({LLM_MODEL})"
     )
 
 # ── Side-by-side comparison table ─────────────────────────────────────────────
@@ -158,7 +161,9 @@ print(f"  Gold standard triples           : {research['total_triples_gold']}")
 
 # ── Save full JSON results ─────────────────────────────────────────────────────
 os.makedirs("target", exist_ok=True)
-OUTPUT = "target/comparison_results.json"
+# Formats the output file to include the RUN_ID and the LLM_MODEL dynamically
+OUTPUT = f"target/comparison_results_{RUN_ID}_{LLM_MODEL}.json"
+
 with open(OUTPUT, "w") as f:
     json.dump({'research': research, 'yours': yours}, f, indent=2, default=str)
 print(f"\n✓ Full results saved to {OUTPUT}\n")

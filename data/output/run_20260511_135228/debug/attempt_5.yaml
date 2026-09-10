@@ -1,0 +1,39 @@
+prefixes:
+  dbo: "http://dbpedia.org/ontology/"
+  xsd: "http://www.w3.org/2001/XMLSchema#"
+  lkg: "http://mykg.org/resource/"
+
+mappings:
+  FilmMapping:
+    sources:
+      - [data/input/hofer-imdb/diamond/movie_data.csv~csv]
+    s: http://mykg.org/resource/Film/$(movie_id)
+    po:
+      - [a, <http://dbpedia.org/ontology/Film>]
+      - [dbo:title, $(primaryTitle), xsd:langString]
+      - [dbo:originalTitle, $(originalTitle), xsd:langString]
+      - [dbo:startYear, $(startYear), xsd:gYear]
+      - [dbo:runtime, $(runtimeMinutes), xsd:minute]
+      - [dbo:genre, $(genres), xsd:langString]
+      - [dbo:isAdult, $(isAdult), xsd:boolean]
+      - [dbo:titleType, $(titleType), xsd:string]
+      - [lkg:metadata, http://mykg.org/resource/Film/$(movie_id)/Metadata~iri]
+
+  FilmMetadataMapping:
+    sources:
+      - [data/input/hofer-imdb/diamond/movie_data.csv~csv]
+    s: http://mykg.org/resource/Film/$(movie_id)/Metadata
+    po:
+      - [a, <http://dbpedia.org/ontology/Film>]
+      - [dbo:isAdult, $(isAdult), xsd:boolean]
+      - [dbo:titleType, $(titleType), xsd:string]
+
+  PersonMapping:
+    sources:
+      - [data/input/hofer-imdb/diamond/movie_data.csv~csv]
+    s: http://mykg.org/resource/Person/$(person_id)
+    po:
+      - [a, <http://dbpedia.org/ontology/Person>]
+      - [dbo:name, $(primaryName), xsd:langString]
+      - [dbo:birthYear, $(birthYear), xsd:gYear]
+      - [dbo:deathYear, $(deathYear), xsd:gYear]

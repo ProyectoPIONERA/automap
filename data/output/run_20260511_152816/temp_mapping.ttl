@@ -1,0 +1,221 @@
+@prefix dul: <http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#>.
+@prefix schema: <http://schema.org/>.
+@prefix dbp: <http://dbpedia.org/ontology/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix rr: <http://www.w3.org/ns/r2rml#>.
+@prefix rml: <http://semweb.mmlab.be/ns/rml#>.
+@prefix ql: <http://semweb.mmlab.be/ns/ql#>.
+@prefix d2rq: <http://www.wiwiss.fu-berlin.de/suhl/bizer/D2RQ/0.1#>.
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+@prefix formats: <http://www.w3.org/ns/formats/>.
+@prefix comp: <http://semweb.mmlab.be/ns/rml-compression#>.
+@prefix void: <http://rdfs.org/ns/void#>.
+@prefix fnml: <http://semweb.mmlab.be/ns/fnml#>.
+@prefix grel: <http://users.ugent.be/~bjdmeest/function/grel.ttl#>.
+@base <http://example.com/ns#>.
+
+
+<FilmMapping_0> a rr:TriplesMap;
+
+	rml:logicalSource [
+		a rml:LogicalSource;
+		rml:source "/home/naveen/Documents/LLM-Agents_RML/data/input/hofer-imdb/diamond/movie_data.csv";
+		rml:referenceFormulation ql:CSV
+
+	];
+	rr:subjectMap [
+		a rr:SubjectMap;
+		rr:template "http://dbpedia.org/ontology/Film/{movie_id}";
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant rdf:type;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rr:constant dbp:Film;
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant dbp:title;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "primaryTitle";
+			rr:datatype xsd:string
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant dbp:originalTitle;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "originalTitle";
+			rr:datatype xsd:string
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant dbp:startYear;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "startYear";
+			rr:datatype xsd:gYear
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant dbp:runtime;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "runtimeMinutes";
+			rr:datatype xsd:double
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant dbp:genre;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "genres";
+			rr:datatype xsd:string
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant schema:isAccessibleForFree;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "isAdult";
+			rr:datatype xsd:boolean
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant dbp:type;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "titleType";
+			rr:datatype xsd:string
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant dbp:starring;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "person_id";
+			rr:datatype xsd:string
+		];
+	].
+
+
+<ActorMapping_0> a rr:TriplesMap;
+
+	rml:logicalSource [
+		a rml:LogicalSource;
+		rml:source "/home/naveen/Documents/LLM-Agents_RML/data/input/hofer-imdb/diamond/movie_data.csv";
+		rml:referenceFormulation ql:CSV
+
+	];
+	rr:subjectMap [
+		a rr:SubjectMap;
+		rr:template "http://dbpedia.org/ontology/Actor/{person_id}";
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant rdf:type;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rr:constant dbp:Actor;
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant dbp:name;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "primaryName";
+			rr:datatype xsd:string
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant dbp:profession;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "category";
+			rr:datatype xsd:string
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant dul:orderIn;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "ordering";
+			rr:datatype xsd:integer
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant dbp:birthYear;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "birthYear";
+			rr:datatype xsd:gYear
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant dbp:deathYear;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rml:reference "deathYear";
+			rr:datatype xsd:float
+		];
+	];
+	rr:predicateObjectMap [
+		rr:predicateMap [
+			a rr:PredicateMap;
+			rr:constant dbp:film;
+		];
+		rr:objectMap [
+			a rr:ObjectMap;
+			rr:template "http://dbpedia.org/ontology/Film/{movie_id}";
+			rr:termType rr:IRI
+		];
+	].
+
+

@@ -1,0 +1,14 @@
+# Competency Questions (auto-generated)
+# Generated: 2026-05-11T13:57:13.466494
+# Total: 10
+
+1. Which movies exist in the dataset?
+2. What is the runtime of a given movie?
+3. Which actors are linked to a specific movie via their roles?
+4. What is the birth year of a given person?
+5. How many genres does a particular movie have?
+6. Which films were released in a specific year?
+7. Who are the adult-rated movies in the dataset?
+8. What is the primary name of a given person involved in the movies?
+9. Which categories of people (e.g., actor, actress) are represented in the dataset?
+10. How many minutes long is the movie with the longest runtime?

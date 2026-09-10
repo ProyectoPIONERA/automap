@@ -1,0 +1,86 @@
+@prefix ex:     <http://example.org/fraud#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix schema: <http://schema.org/> .
+@prefix geo:    <http://www.w3.org/2003/01/geo/wgs84_pos#> .
+
+ex:FraudOntology a owl:Ontology ;
+    rdfs:label "Credit Card Fraud Detection Ontology" .
+
+# ─── Classes ───────────────────────────────────────────
+
+ex:CreditCardTransaction a owl:Class ;
+    rdfs:label "Credit Card Transaction" .
+
+ex:CreditCard a owl:Class ;
+    rdfs:label "Credit Card" .
+
+ex:Merchant a owl:Class ;
+    rdfs:label "Merchant" .
+
+schema:Person a owl:Class ;
+    rdfs:label "Cardholder" .
+
+schema:PostalAddress a owl:Class ;
+    rdfs:label "Postal Address" .
+
+# ─── Object Properties ─────────────────────────────────
+
+ex:madeBy a owl:ObjectProperty ;
+    rdfs:domain ex:CreditCardTransaction ;
+    rdfs:range  schema:Person ;
+    rdfs:label  "made by" .
+
+ex:atMerchant a owl:ObjectProperty ;
+    rdfs:domain ex:CreditCardTransaction ;
+    rdfs:range  ex:Merchant ;
+    rdfs:label  "at merchant" .
+
+ex:usesCard a owl:ObjectProperty ;
+    rdfs:domain ex:CreditCardTransaction ;
+    rdfs:range  ex:CreditCard ;
+    rdfs:label  "uses card" .
+
+ex:heldBy a owl:ObjectProperty ;
+    rdfs:domain ex:CreditCard ;
+    rdfs:range  schema:Person ;
+    rdfs:label  "held by" .
+
+schema:address a owl:ObjectProperty ;
+    rdfs:domain schema:Person ;
+    rdfs:range  schema:PostalAddress ;
+    rdfs:label  "address" .
+
+# ─── Datatype Properties ───────────────────────────────
+
+ex:transactionId a owl:DatatypeProperty ;
+    rdfs:domain ex:CreditCardTransaction ;
+    rdfs:range  xsd:string .
+
+ex:transactionDateTime a owl:DatatypeProperty ;
+    rdfs:domain ex:CreditCardTransaction ;
+    rdfs:range  xsd:dateTime .
+
+ex:amount a owl:DatatypeProperty ;
+    rdfs:domain ex:CreditCardTransaction ;
+    rdfs:range  xsd:decimal .
+
+ex:isFraud a owl:DatatypeProperty ;
+    rdfs:domain ex:CreditCardTransaction ;
+    rdfs:range  xsd:boolean .
+
+ex:merchantCategory a owl:DatatypeProperty ;
+    rdfs:domain ex:Merchant ;
+    rdfs:range  xsd:string .
+
+ex:cardNumber a owl:DatatypeProperty ;
+    rdfs:domain ex:CreditCard ;
+    rdfs:range  xsd:long .
+
+ex:unixTime a owl:DatatypeProperty ;
+    rdfs:domain ex:CreditCardTransaction ;
+    rdfs:range  xsd:long .
+
+geo:lat a owl:DatatypeProperty ; rdfs:range xsd:decimal .
+geo:long a owl:DatatypeProperty ; rdfs:range xsd:decimal .

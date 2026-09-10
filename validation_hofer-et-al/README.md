@@ -177,10 +177,10 @@ Expected output structure:
   Your pipeline total triples     : 67
   Gold standard triples           : 49
 
-✓ Full results saved to target/comparison_results.json
+✓ Full results saved to target/comparison_results_run_20260527_123946_deepseek-r1-distill-qwen-14b.json
 ```
 
-Full numeric results are written to `target/comparison_results.json`.
+Full numeric results are written to `target/comparison_results_<run_timestamp>_<llm-model>.json`.
 
 ---
 

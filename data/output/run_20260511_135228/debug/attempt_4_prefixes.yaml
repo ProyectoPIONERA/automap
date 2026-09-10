@@ -1,0 +1,4 @@
+prefixes:
+  dbo: "http://dbpedia.org/ontology/"
+  xsd: "http://www.w3.org/2001/XMLSchema#"
+  lkg: "http://mykg.org/resource/"
