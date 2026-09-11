@@ -1,0 +1,214 @@
+# SPARQL CQ Validation Report
+# Generated: 2026-05-26T15:23:16.052233
+# Retry: 0
+# Total checks: 10
+
+[1] PASS  [generated_cq]
+  CQ      : Which transactions exist in the dataset?
+  SPARQL  :
+    PREFIX eli: <http://data.europa.eu/eli/ontology#>
+    PREFIX geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+    PREFIX lkg: <http://example.org/lkg#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX ex: <http://example.org/>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    PREFIX schema: <http://schema.org/>
+    
+    ASK {
+      ?transaction a ex:CreditCardTransaction .
+    }
+
+[2] PASS  [generated_cq]
+  CQ      : What is the amount of a given transaction?
+  SPARQL  :
+    PREFIX eli: <http://data.europa.eu/eli/ontology#>
+    PREFIX geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+    PREFIX lkg: <http://example.org/lkg#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX ex: <http://example.org/>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    PREFIX schema: <http://schema.org/>
+    
+    ASK {
+      ?transaction a ex:CreditCardTransaction ;
+                   ex:amount ?amount .
+    }
+
+[3] PASS  [generated_cq]
+  CQ      : Which merchants are linked to transactions via the "at merchant" relationship?
+  SPARQL  :
+    PREFIX eli: <http://data.europa.eu/eli/ontology#>
+    PREFIX geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+    PREFIX lkg: <http://example.org/lkg#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX ex: <http://example.org/>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    PREFIX schema: <http://schema.org/>
+    
+    ASK {
+      ?transaction a ex:CreditCardTransaction ;
+                   ex:atMerchant ?merchant .
+    }
+
+[4] FAIL  [generated_cq]
+  CQ      : How many transactions occurred on June 21, 2020?
+  SPARQL  :
+    PREFIX eli: <http://data.europa.eu/eli/ontology#>
+    PREFIX geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+    PREFIX lkg: <http://example.org/lkg#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX ex: <http://example.org/>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    PREFIX schema: <http://schema.org/>
+    
+    ASK {
+      ?transaction a ex:CreditCardTransaction ;
+                   ex:transactionDateTime "2020-06-21"^^xsd:date .
+    }
+  Diagnosis: ASK returned false. Missing: ?transaction a ex:CreditCardTransaction ;
+               ex:transactionDateTime "2020-06-21"^^xsd:date .
+
+[5] FAIL  [generated_cq]
+  CQ      : Which person holds the credit card with number 2291163933867244?
+  SPARQL  :
+    PREFIX eli: <http://data.europa.eu/eli/ontology#>
+    PREFIX geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+    PREFIX lkg: <http://example.org/lkg#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX ex: <http://example.org/>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    PREFIX schema: <http://schema.org/>
+    
+    ASK {
+      ?person a schema:Person ;
+              ex:usesCard ?creditCard .
+      ?creditCard ex:cardNumber "2291163933867244"^^xsd:string .
+    }
+  Diagnosis: ASK returned false. Missing: ?person a schema:Person ;
+          ex:usesCard ?creditCard .
+  ?creditCard ex:cardNumber "2291163933867244"^^xsd:string .
+
+[6] FAIL  [generated_cq]
+  CQ      : What is the category of the merchant 'fraud_Kirlin and Sons'?
+  SPARQL  :
+    PREFIX eli: <http://data.europa.eu/eli/ontology#>
+    PREFIX geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+    PREFIX lkg: <http://example.org/lkg#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX ex: <http://example.org/>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    PREFIX schema: <http://schema.org/>
+    
+    ASK {
+      ?merchant a ex:Merchant ;
+                schema:name "fraud_Kirlin and Sons" ;
+                ex:merchantCategory ?category .
+    }
+  Diagnosis: ASK returned false. Missing: ?merchant a ex:Merchant ;
+            schema:name "fraud_Kirlin and Sons" ;
+            ex:merchantCategory ?category .
+
+[7] FAIL  [generated_cq]
+  CQ      : How many transactions are marked as fraud in the dataset?
+  SPARQL  :
+    PREFIX eli: <http://data.europa.eu/eli/ontology#>
+    PREFIX geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+    PREFIX lkg: <http://example.org/lkg#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX schema: <http://schema.org/>
+    PREFIX ex: <http://example.org/>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    
+    ASK {
+      ?transaction a ex:CreditCardTransaction ;
+                   ex:isFraud true .
+    }
+  Diagnosis: ASK returned false. Missing: ?transaction a ex:CreditCardTransaction ;
+               ex:isFraud true .
+
+[8] FAIL  [generated_cq]
+  CQ      : What is the latitude and longitude of the city where the transaction with ID '2da90c7d74bd46a0caf3777415b3ebd3' occurred?
+  SPARQL  :
+    PREFIX eli: <http://data.europa.eu/eli/ontology#>
+    PREFIX ex: <http://example.org/>
+    PREFIX geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+    PREFIX lkg: <http://example.org/lkg#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX schema: <http://schema.org/>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    
+    ASK {
+      ?transaction a ex:CreditCardTransaction ;
+                   ex:atMerchant ?merchant .
+      ?merchant schema:address ?address .
+      ?address geo1:lat ?latitude ;
+               geo1:long ?longitude .
+    }
+  Diagnosis: ASK returned false. Missing: ?transaction a ex:CreditCardTransaction ;
+               ex:atMerchant ?merchant .
+  ?merchant schema:address ?address .
+  ?address geo1:lat ?latitude ;
+           geo1:long ?longitude .
+
+[9] FAIL  [generated_cq]
+  CQ      : Which person lives at the address 351 Darlene Green, Columbia, SC, 29209?
+  SPARQL  :
+    PREFIX eli: <http://data.europa.eu/eli/ontology#>
+    PREFIX geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+    PREFIX lkg: <http://example.org/lkg#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX ex: <http://example.org/>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    PREFIX schema: <http://schema.org/>
+    
+    ASK {
+      ?person a schema:Person ;
+              schema:address ?address .
+      ?address a schema:PostalAddress ;
+               schema:streetAddress "351 Darlene Green" ;
+               schema:addressLocality "Columbia" ;
+               schema:addressRegion "SC" ;
+               schema:postalCode "29209" .
+    }
+  Diagnosis: ASK returned false. Missing: ?person a schema:Person ;
+          schema:address ?address .
+  ?address a schema:PostalAddress ;
+           schema:streetAddress "351 Darlene Green" ;
+           schema:addressLocality "Columbia" ;
+           schema:addressRegion "SC" ;
+           schema:postalCode "29209" .
+
+[10] FAIL  [generated_cq]
+  CQ      : What is the job of the person who made the transaction with ID '324cc204407e99f51b0d6ca0055005e7'?
+  SPARQL  :
+    PREFIX eli: <http://data.europa.eu/eli/ontology#>
+    PREFIX geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+    PREFIX lkg: <http://example.org/lkg#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX ex: <http://example.org/>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    PREFIX schema: <http://schema.org/>
+    
+    ASK {
+      ?transaction a ex:CreditCardTransaction ;
+                   ex:usesCard ?card .
+      ?card ex:heldBy ?person .
+      ?person a schema:Person ;
+              schema:jobTitle ?jobTitle .
+    }
+  Diagnosis: ASK returned false. Missing: ?transaction a ex:CreditCardTransaction ;
+               ex:usesCard ?card .
+  ?card ex:heldBy ?person .
+  ?person a schema:Person ;
+          schema:jobTitle ?jobTitle .
+

@@ -1,0 +1,102 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+
+[] a sh:NodeShape ;
+    sh:nodeKind sh:IRI ;
+    sh:targetClass <http://schema.org/PostalAddress> .
+
+[] a sh:NodeShape ;
+    sh:property [ sh:nodeKind sh:IRI ;
+            sh:path <http://example.org/fraud#usesCard> ] ;
+    sh:targetClass <http://example.org/fraud#CreditCardTransaction> .
+
+[] a sh:NodeShape ;
+    sh:nodeKind sh:IRI ;
+    sh:targetClass <http://example.org/fraud#CreditCardTransaction> .
+
+[] a sh:NodeShape ;
+    sh:property [ sh:nodeKind sh:Literal ;
+            sh:path <http://www.w3.org/2003/01/geo/wgs84_pos#long> ] ;
+    sh:targetSubjectsOf <http://www.w3.org/2003/01/geo/wgs84_pos#long> .
+
+[] a sh:NodeShape ;
+    sh:property [ sh:nodeKind sh:Literal ;
+            sh:path <http://example.org/fraud#transactionDateTime> ] ;
+    sh:targetClass <http://example.org/fraud#CreditCardTransaction> .
+
+[] a sh:NodeShape ;
+    sh:property [ sh:nodeKind sh:IRI ;
+            sh:path <http://schema.org/address> ] ;
+    sh:targetClass <http://schema.org/Person> .
+
+[] a sh:NodeShape ;
+    sh:nodeKind sh:IRI ;
+    sh:targetClass <http://example.org/fraud#Merchant> .
+
+[] a sh:NodeShape ;
+    sh:nodeKind sh:IRI ;
+    sh:targetSubjectsOf rdf:type .
+
+[] a sh:NodeShape ;
+    sh:nodeKind sh:IRI ;
+    sh:targetClass <http://example.org/fraud#CreditCard> .
+
+[] a sh:NodeShape ;
+    sh:property [ sh:nodeKind sh:IRI ;
+            sh:path rdf:type ] ;
+    sh:targetSubjectsOf rdf:type .
+
+[] a sh:NodeShape ;
+    sh:property [ sh:nodeKind sh:IRI ;
+            sh:path <http://example.org/fraud#atMerchant> ] ;
+    sh:targetClass <http://example.org/fraud#CreditCardTransaction> .
+
+[] a sh:NodeShape ;
+    sh:property [ sh:nodeKind sh:Literal ;
+            sh:path <http://example.org/fraud#cardNumber> ] ;
+    sh:targetClass <http://example.org/fraud#CreditCard> .
+
+[] a sh:NodeShape ;
+    sh:property [ sh:nodeKind sh:Literal ;
+            sh:path <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ] ;
+    sh:targetSubjectsOf <http://www.w3.org/2003/01/geo/wgs84_pos#lat> .
+
+[] a sh:NodeShape ;
+    sh:property [ sh:nodeKind sh:Literal ;
+            sh:path <http://example.org/fraud#amount> ] ;
+    sh:targetClass <http://example.org/fraud#CreditCardTransaction> .
+
+[] a sh:NodeShape ;
+    sh:property [ sh:nodeKind sh:Literal ;
+            sh:path <http://example.org/fraud#unixTime> ] ;
+    sh:targetClass <http://example.org/fraud#CreditCardTransaction> .
+
+[] a sh:NodeShape ;
+    sh:property [ sh:nodeKind sh:Literal ;
+            sh:path <http://example.org/fraud#isFraud> ] ;
+    sh:targetClass <http://example.org/fraud#CreditCardTransaction> .
+
+[] a sh:NodeShape ;
+    sh:nodeKind sh:IRI ;
+    sh:targetClass <http://schema.org/Person> .
+
+[] a sh:NodeShape ;
+    sh:property [ sh:nodeKind sh:IRI ;
+            sh:path <http://example.org/fraud#madeBy> ] ;
+    sh:targetClass <http://example.org/fraud#CreditCardTransaction> .
+
+[] a sh:NodeShape ;
+    sh:property [ sh:nodeKind sh:IRI ;
+            sh:path <http://example.org/fraud#heldBy> ] ;
+    sh:targetClass <http://example.org/fraud#CreditCard> .
+
+[] a sh:NodeShape ;
+    sh:property [ sh:nodeKind sh:Literal ;
+            sh:path <http://example.org/fraud#merchantCategory> ] ;
+    sh:targetClass <http://example.org/fraud#Merchant> .
+
+[] a sh:NodeShape ;
+    sh:property [ sh:nodeKind sh:Literal ;
+            sh:path <http://example.org/fraud#transactionId> ] ;
+    sh:targetClass <http://example.org/fraud#CreditCardTransaction> .
+

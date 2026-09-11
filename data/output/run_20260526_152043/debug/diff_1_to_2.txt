@@ -1,0 +1,41 @@
+--- attempt_1.yaml
++++ attempt_2.yaml
+@@ -20,16 +20,14 @@
+       - [ex:isFraud, $(is_fraud), xsd:boolean]
+       - [ex:unixTime, $(unix_time), xsd:long]
+       - [ex:transactionDateTime, $(trans_date_trans_time), xsd:dateTime]
++      - [ex:cardNumber, $(cc_num), xsd:string]
++      - [schema:name, $(merchant), xsd:string]
++      - [schema:givenName, $(first), xsd:string]
++      - [schema:lastName, $(last), xsd:string]
+       - [schema:streetAddress, $(street), xsd:string]
+       - [schema:addressLocality, $(city), xsd:string]
+       - [schema:addressRegion, $(state), xsd:string]
+       - [schema:postalCode, $(zip), xsd:string]
+-      - [ex:cardNumber, $(cc_num), xsd:string]
+-      - [schema:name, $(merchant), xsd:string]
+-      - [schema:givenName, $(first), xsd:string]
+-      - [schema:lastName, $(last), xsd:string]
+-      - [geo1:lat, $(lat), xsd:string]
+-      - [geo1:long, $(long), xsd:string]
+       - [ex:atMerchant, ex:merchant/$(merchant)~iri]
+       - [ex:heldBy, ex:person/$(first)_$(last)~iri]
+       - [ex:usesCard, ex:creditCard/$(cc_num)~iri]
+@@ -56,7 +54,7 @@
+       - [schema:lastName, $(last), xsd:string]
+       - [schema:gender, $(gender), xsd:string]
+       - [schema:jobTitle, $(job), xsd:string]
+-      - [schema:birthDate, $(dob), xsd:string]
++      - [schema:birthDate, $(dob), xsd:date]
+       - [eli:has_part, ex:transaction/$(trans_num)~iri]
+ 
+   PostalAddressMapping:
+@@ -69,7 +67,7 @@
+       - [schema:addressLocality, $(city), xsd:string]
+       - [schema:addressRegion, $(state), xsd:string]
+       - [schema:postalCode, $(zip), xsd:string]
+-      - [schema:population, $(city_pop), xsd:string]
++      - [schema:population, $(city_pop), xsd:int]
+       - [eli:has_part, ex:transaction/$(trans_num)~iri]
+ 
+   MetadataMapping:

@@ -1,0 +1,72 @@
+[
+  {
+    "cq": "Which transactions exist in the dataset?",
+    "sparql": "PREFIX eli: <http://data.europa.eu/eli/ontology#>\nPREFIX geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#>\nPREFIX lkg: <http://example.org/lkg#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX ex: <http://example.org/>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\nPREFIX schema: <http://schema.org/>\n\nASK {\n  ?transaction a ex:CreditCardTransaction .\n}",
+    "passed": true,
+    "diagnosis": "",
+    "source": "generated_cq"
+  },
+  {
+    "cq": "What is the amount of a given transaction?",
+    "sparql": "PREFIX eli: <http://data.europa.eu/eli/ontology#>\nPREFIX geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#>\nPREFIX lkg: <http://example.org/lkg#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX ex: <http://example.org/>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\nPREFIX schema: <http://schema.org/>\n\nASK {\n  ?transaction a ex:CreditCardTransaction ;\n               ex:amount ?amount .\n}",
+    "passed": true,
+    "diagnosis": "",
+    "source": "generated_cq"
+  },
+  {
+    "cq": "Which merchants are linked to transactions via the \"at merchant\" relationship?",
+    "sparql": "PREFIX eli: <http://data.europa.eu/eli/ontology#>\nPREFIX geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#>\nPREFIX lkg: <http://example.org/lkg#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX ex: <http://example.org/>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\nPREFIX schema: <http://schema.org/>\n\nASK {\n  ?transaction a ex:CreditCardTransaction ;\n               ex:atMerchant ?merchant .\n}",
+    "passed": true,
+    "diagnosis": "",
+    "source": "generated_cq"
+  },
+  {
+    "cq": "How many transactions occurred on June 21, 2020?",
+    "sparql": "PREFIX eli: <http://data.europa.eu/eli/ontology#>\nPREFIX geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#>\nPREFIX lkg: <http://example.org/lkg#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX ex: <http://example.org/>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\nPREFIX schema: <http://schema.org/>\n\nASK {\n  ?transaction a ex:CreditCardTransaction ;\n               ex:transactionDateTime \"2020-06-21\"^^xsd:date .\n}",
+    "passed": false,
+    "diagnosis": "ASK returned false. Missing: ?transaction a ex:CreditCardTransaction ;\n               ex:transactionDateTime \"2020-06-21\"^^xsd:date .",
+    "source": "generated_cq"
+  },
+  {
+    "cq": "Which person holds the credit card with number 2291163933867244?",
+    "sparql": "PREFIX eli: <http://data.europa.eu/eli/ontology#>\nPREFIX geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#>\nPREFIX lkg: <http://example.org/lkg#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX ex: <http://example.org/>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\nPREFIX schema: <http://schema.org/>\n\nASK {\n  ?person a schema:Person ;\n          ex:usesCard ?creditCard .\n  ?creditCard ex:cardNumber \"2291163933867244\"^^xsd:string .\n}",
+    "passed": false,
+    "diagnosis": "ASK returned false. Missing: ?person a schema:Person ;\n          ex:usesCard ?creditCard .\n  ?creditCard ex:cardNumber \"2291163933867244\"^^xsd:string .",
+    "source": "generated_cq"
+  },
+  {
+    "cq": "What is the category of the merchant 'fraud_Kirlin and Sons'?",
+    "sparql": "PREFIX eli: <http://data.europa.eu/eli/ontology#>\nPREFIX geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#>\nPREFIX lkg: <http://example.org/lkg#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX ex: <http://example.org/>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\nPREFIX schema: <http://schema.org/>\n\nASK {\n  ?merchant a ex:Merchant ;\n            schema:name \"fraud_Kirlin and Sons\" ;\n            ex:merchantCategory ?category .\n}",
+    "passed": false,
+    "diagnosis": "ASK returned false. Missing: ?merchant a ex:Merchant ;\n            schema:name \"fraud_Kirlin and Sons\" ;\n            ex:merchantCategory ?category .",
+    "source": "generated_cq"
+  },
+  {
+    "cq": "How many transactions are marked as fraud in the dataset?",
+    "sparql": "PREFIX eli: <http://data.europa.eu/eli/ontology#>\nPREFIX geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#>\nPREFIX lkg: <http://example.org/lkg#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX schema: <http://schema.org/>\nPREFIX ex: <http://example.org/>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n\nASK {\n  ?transaction a ex:CreditCardTransaction ;\n               ex:isFraud true .\n}",
+    "passed": false,
+    "diagnosis": "ASK returned false. Missing: ?transaction a ex:CreditCardTransaction ;\n               ex:isFraud true .",
+    "source": "generated_cq"
+  },
+  {
+    "cq": "What is the latitude and longitude of the city where the transaction with ID '2da90c7d74bd46a0caf3777415b3ebd3' occurred?",
+    "sparql": "PREFIX eli: <http://data.europa.eu/eli/ontology#>\nPREFIX ex: <http://example.org/>\nPREFIX geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#>\nPREFIX lkg: <http://example.org/lkg#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX schema: <http://schema.org/>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n\nASK {\n  ?transaction a ex:CreditCardTransaction ;\n               ex:atMerchant ?merchant .\n  ?merchant schema:address ?address .\n  ?address geo1:lat ?latitude ;\n           geo1:long ?longitude .\n}",
+    "passed": false,
+    "diagnosis": "ASK returned false. Missing: ?transaction a ex:CreditCardTransaction ;\n               ex:atMerchant ?merchant .\n  ?merchant schema:address ?address .\n  ?address geo1:lat ?latitude ;\n           geo1:long ?longitude .",
+    "source": "generated_cq"
+  },
+  {
+    "cq": "Which person lives at the address 351 Darlene Green, Columbia, SC, 29209?",
+    "sparql": "PREFIX eli: <http://data.europa.eu/eli/ontology#>\nPREFIX geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#>\nPREFIX lkg: <http://example.org/lkg#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX ex: <http://example.org/>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\nPREFIX schema: <http://schema.org/>\n\nASK {\n  ?person a schema:Person ;\n          schema:address ?address .\n  ?address a schema:PostalAddress ;\n           schema:streetAddress \"351 Darlene Green\" ;\n           schema:addressLocality \"Columbia\" ;\n           schema:addressRegion \"SC\" ;\n           schema:postalCode \"29209\" .\n}",
+    "passed": false,
+    "diagnosis": "ASK returned false. Missing: ?person a schema:Person ;\n          schema:address ?address .\n  ?address a schema:PostalAddress ;\n           schema:streetAddress \"351 Darlene Green\" ;\n           schema:addressLocality \"Columbia\" ;\n           schema:addressRegion \"SC\" ;\n           schema:postalCode \"29209\" .",
+    "source": "generated_cq"
+  },
+  {
+    "cq": "What is the job of the person who made the transaction with ID '324cc204407e99f51b0d6ca0055005e7'?",
+    "sparql": "PREFIX eli: <http://data.europa.eu/eli/ontology#>\nPREFIX geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#>\nPREFIX lkg: <http://example.org/lkg#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX ex: <http://example.org/>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\nPREFIX schema: <http://schema.org/>\n\nASK {\n  ?transaction a ex:CreditCardTransaction ;\n               ex:usesCard ?card .\n  ?card ex:heldBy ?person .\n  ?person a schema:Person ;\n          schema:jobTitle ?jobTitle .\n}",
+    "passed": false,
+    "diagnosis": "ASK returned false. Missing: ?transaction a ex:CreditCardTransaction ;\n               ex:usesCard ?card .\n  ?card ex:heldBy ?person .\n  ?person a schema:Person ;\n          schema:jobTitle ?jobTitle .",
+    "source": "generated_cq"
+  }
+]

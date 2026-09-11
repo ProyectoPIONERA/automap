@@ -1,0 +1,42 @@
+mappings:
+  CreditCardTransactionMapping:
+    sources:
+      - [data/input/kaggle/Credit_Fraud/fraudTest.csv~csv]
+    s: ex:CreditCardTransaction/$(trans_num)
+    po:
+      - [a, ex:CreditCardTransaction]
+      - [schema:hasPart, $(cc_num)~iri]
+      - [schema:merchant, $(merchant)~iri]
+      - [ex:amount, $(amt), xsd:decimal]
+      - [ex:isFraud, $(is_fraud), xsd:boolean]
+      - [schema:cardholder, ex:Person/$(first)~iri]
+      - [lkg:metadata, ex:CreditCardTransaction/$(trans_num)/Metadata~iri]
+  MerchantMapping:
+    sources:
+      - [data/input/kaggle/Credit_Fraud/fraudTest.csv~csv]
+    s: ex:Merchant/$(merchant)
+    po:
+      - [a, ex:Merchant]
+      - [geo1:lat, $(merch_lat), xsd:float]
+      - [geo1:long, $(merch_long), xsd:float]
+      - [schema:merchant, $(merchant)~iri]
+      - [eli:has_part, ex:CreditCardTransaction/$(trans_num)~iri]
+  MetadataMapping:
+    sources:
+      - [data/input/kaggle/Credit_Fraud/fraudTest.csv~csv]
+    s: ex:CreditCardTransaction/$(trans_num)/Metadata
+    po:
+      - [a, ex:CreditCardTransactionMetadata]
+      - [schema:transactionDateTime, $(trans_date_trans_time), xsd:dateTime]
+      - [schema:first, $(first), xsd:string]
+      - [schema:last, $(last), xsd:string]
+      - [schema:gender, $(gender), xsd:string]
+      - [schema:street, $(street), xsd:string]
+      - [schema:city, $(city), xsd:string]
+      - [schema:state, $(state), xsd:string]
+      - [schema:zip, $(zip), xsd:string]
+      - [geo1:lat, $(lat), xsd:float]
+      - [geo1:long, $(long), xsd:float]
+      - [schema:cityPop, $(city_pop), xsd:integer]
+      - [schema:job, $(job), xsd:string]
+      - [schema:dob, $(dob), xsd:date]

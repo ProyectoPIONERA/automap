@@ -1,0 +1,269 @@
+# SPARQL CQ Validation Report
+# Generated: 2026-05-26T15:37:43.489321
+# Retry: 2
+# Total checks: 11
+
+[1] FAIL  [user_cq]
+  CQ      : Which transactions are flagged as fraudulent?
+  SPARQL  :
+    PREFIX eli: <http://data.europa.eu/eli/ontology#>
+    PREFIX geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+    PREFIX lkg: <http://example.org/lkg#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX schema: <http://schema.org/>
+    PREFIX ex: <http://example.org/>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    
+    ASK {
+      ?transaction a ex:CreditCardTransaction ;
+                   ex:isFraud true .
+    }
+  Diagnosis: ASK returned false. Missing: ?transaction a ex:CreditCardTransaction ;
+               ex:isFraud true .
+
+[2] FAIL  [user_cq]
+  CQ      : Which cardholders have made more than 3 fraudulent transactions?
+  SPARQL  :
+    PREFIX eli: <http://data.europa.eu/eli/ontology#>
+    PREFIX ex: <http://example.org/>
+    PREFIX geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+    PREFIX lkg: <http://example.org/lkg#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX schema: <http://schema.org/>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    
+    ASK {
+      ?cardholder a schema:Person ;
+                  schema:name ?name .
+      ?transaction a ex:CreditCardTransaction ;
+                   ex:isFraud true ;
+                   schema:madeBy ?cardholder .
+    }
+  Diagnosis: ASK returned false. Missing: ?cardholder a schema:Person ;
+              schema:name ?name .
+  ?transaction a ex:CreditCardTransaction ;
+               ex:isFraud true ;
+               schema:madeBy ?cardholder .
+
+[3] FAIL  [user_cq]
+  CQ      : What is the total amount involved in fraudulent transactions per merchant category?
+  SPARQL  :
+    PREFIX eli: <http://data.europa.eu/eli/ontology#>
+    PREFIX geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+    PREFIX lkg: <http://example.org/lkg#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX schema: <http://schema.org/>
+    PREFIX ex: <http://example.org/>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    
+    ASK {
+      ?transaction a ex:CreditCardTransaction ;
+                   ex:isFraud true ;
+                   ex:amount ?amount ;
+                   ex:atMerchant ?merchant .
+      ?merchant ex:category ?category .
+    }
+  Diagnosis: ASK returned false. Missing: ?transaction a ex:CreditCardTransaction ;
+               ex:isFraud true ;
+               ex:amount ?amount ;
+               ex:atMerchant ?merchant .
+  ?merchant ex:category ?category .
+
+[4] PASS  [user_cq]
+  CQ      : What is the job and date of birth of the cardholder who made a given transaction?
+  SPARQL  :
+    PREFIX eli: <http://data.europa.eu/eli/ontology#>
+    PREFIX geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+    PREFIX lkg: <http://example.org/lkg#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX ex: <http://example.org/>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    PREFIX schema: <http://schema.org/>
+    
+    ASK {
+      ?transaction a ex:CreditCardTransaction ;
+                   schema:madeBy ?cardholder .
+      ?cardholder a schema:Person ;
+                  schema:occupation ?job ;
+                  schema:birthDate ?dob .
+    }
+
+[5] FAIL  [user_cq]
+  CQ      : Which cardholders live in a city with a population greater than 100,000?
+  SPARQL  :
+    PREFIX eli: <http://data.europa.eu/eli/ontology#>
+    PREFIX geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+    PREFIX lkg: <http://example.org/lkg#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX ex: <http://example.org/>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    PREFIX schema: <http://schema.org/>
+    
+    ASK {
+      ?cardholder a schema:Person ;
+                  schema:address ?address .
+      ?address schema:addressLocality ?city ;
+               schema:population ?population .
+      FILTER(?population > 100000)
+    }
+  Diagnosis: ASK returned false. Missing: ?cardholder a schema:Person ;
+              schema:address ?address .
+  ?address schema:addressLocality ?city ;
+           schema:population ?population .
+  FILTER(?population > 100000)
+
+[6] FAIL  [user_cq]
+  CQ      : Which merchants have the highest number of fraud-flagged transactions?
+  SPARQL  :
+    PREFIX eli: <http://data.europa.eu/eli/ontology#>
+    PREFIX geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+    PREFIX lkg: <http://example.org/lkg#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX ex: <http://example.org/>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    PREFIX schema: <http://schema.org/>
+    
+    ASK {
+      ?transaction a ex:CreditCardTransaction ;
+                   ex:isFraud true ;
+                   ex:atMerchant ?merchant .
+    }
+  Diagnosis: ASK returned false. Missing: ?transaction a ex:CreditCardTransaction ;
+               ex:isFraud true ;
+               ex:atMerchant ?merchant .
+
+[7] FAIL  [user_cq]
+  CQ      : What merchant categories are most associated with fraud?
+  SPARQL  :
+    PREFIX eli: <http://data.europa.eu/eli/ontology#>
+    PREFIX geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+    PREFIX lkg: <http://example.org/lkg#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX ex: <http://example.org/>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    PREFIX schema: <http://schema.org/>
+    
+    ASK {
+      ?transaction a ex:CreditCardTransaction ;
+                   ex:isFraud true ;
+                   ex:atMerchant ?merchant .
+      ?merchant a ex:Merchant ;
+                ex:category ?category .
+    }
+  Diagnosis: ASK returned false. Missing: ?transaction a ex:CreditCardTransaction ;
+               ex:isFraud true ;
+               ex:atMerchant ?merchant .
+  ?merchant a ex:Merchant ;
+            ex:category ?category .
+
+[8] SKIP  [user_cq]
+  CQ      : Which transactions occurred where the cardholder's location and merchant location are more than 50km apart?
+  SPARQL  :
+    PREFIX eli: <http://data.europa.eu/eli/ontology#>
+    PREFIX ex: <http://example.org/>
+    PREFIX geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+    PREFIX lkg: <http://example.org/lkg#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX schema: <http://schema.org/>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    
+    ASK {
+      ?transaction a ex:CreditCardTransaction ;
+                   ex:atMerchant ?merchant .
+      ?merchant geo1:lat ?merchantLat ;
+               geo1:long ?merchantLong .
+      ?cardholder schema:address ?address .
+      ?address geo1:lat ?cardholderLat ;
+               geo1:long ?cardholderLong .
+      
+      BIND(6371 * acos(cos(radians(?cardholderLat)) * cos(radians(?merchantLat)) * cos(radians(?merchantLong) - radians(?cardholderLong)) + sin(radians(?cardholderLat)) * sin(radians(?merchantLat))) AS ?distance)
+      
+      FILTER(?distance > 50)
+    }
+  Diagnosis: SPARQL generation failed: error at 19:29: expected ENCODE_FOR_URI
+
+[9] FAIL  [user_cq]
+  CQ      : Which fraudulent transactions happened in a specific US state (e.g., SC)?
+  SPARQL  :
+    PREFIX eli: <http://data.europa.eu/eli/ontology#>
+    PREFIX geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+    PREFIX lkg: <http://example.org/lkg#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX ex: <http://example.org/>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    PREFIX schema: <http://schema.org/>
+    
+    ASK {
+      ?transaction a ex:CreditCardTransaction ;
+                   ex:isFraud true ;
+                   schema:address ?address .
+      ?address schema:addressRegion "SC" .
+    }
+  Diagnosis: ASK returned false. Missing: ?transaction a ex:CreditCardTransaction ;
+               ex:isFraud true ;
+               schema:address ?address .
+  ?address schema:addressRegion "SC" .
+
+[10] PASS  [user_cq]
+  CQ      : How many transactions occurred within the same hour across all cardholders?
+  SPARQL  :
+    PREFIX eli: <http://data.europa.eu/eli/ontology#>
+    PREFIX geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+    PREFIX lkg: <http://example.org/lkg#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX ex: <http://example.org/>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    PREFIX schema: <http://schema.org/>
+    
+    ASK {
+      ?transaction1 a ex:CreditCardTransaction ;
+                    ex:unixTime ?time1 .
+      ?transaction2 a ex:CreditCardTransaction ;
+                    ex:unixTime ?time2 .
+      FILTER(?transaction1 != ?transaction2)
+      FILTER(floor(?time1 / 3600) = floor(?time2 / 3600))
+    }
+
+[11] FAIL  [user_cq]
+  CQ      : Which cardholder made multiple transactions within a 10-minute window?
+  SPARQL  :
+    PREFIX eli: <http://data.europa.eu/eli/ontology#>
+    PREFIX geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+    PREFIX lkg: <http://example.org/lkg#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX ex: <http://example.org/>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    PREFIX schema: <http://schema.org/>
+    
+    ASK {
+      ?cardholder a schema:Person ;
+                  schema:makesTransaction ?transaction1 .
+      ?transaction1 a ex:CreditCardTransaction ;
+                     ex:unixTime ?time1 .
+      ?cardholder schema:makesTransaction ?transaction2 .
+      ?transaction2 a ex:CreditCardTransaction ;
+                     ex:unixTime ?time2 .
+      FILTER(?transaction1 != ?transaction2)
+      FILTER(?time2 - ?time1 <= 600)  # 10 minutes in seconds
+    }
+  Diagnosis: ASK returned false. Missing: ?cardholder a schema:Person ;
+              schema:makesTransaction ?transaction1 .
+  ?transaction1 a ex:CreditCardTransaction ;
+                 ex:unixTime ?time1 .
+  ?cardholder schema:makesTransaction ?transaction2 .
+  ?transaction2 a ex:CreditCardTransaction ;
+                 ex:unixTime ?time2 .
+  FILTER(?transaction1 != ?transaction2)
+  FILTER(?time2 - ?time1 <= 600)  # 10 minutes in seconds
+

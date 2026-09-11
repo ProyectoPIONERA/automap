@@ -1,0 +1,110 @@
+--- attempt_2.yaml
++++ attempt_3.yaml
+@@ -1,80 +1,59 @@
+ prefixes:
+   eli: "http://data.europa.eu/eli/ontology#"
++  lkg: "http://example.org/lkg#"
++  rdf: "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
++  rdfs: "http://www.w3.org/2000/01/rdf-schema#"
++  xsd: "http://www.w3.org/2001/XMLSchema#"
+   ex: "http://example.org/"
+   schema: "http://schema.org/"
+   geo1: "http://www.w3.org/2003/01/geo/wgs84_pos#"
+-  xsd: "http://www.w3.org/2001/XMLSchema#"
+-  rdf: "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+-  rdfs: "http://www.w3.org/2000/01/rdf-schema#"
++  foaf: "http://xmlns.com/foaf/0.1/"
+   example: "http://example.com/"
+ 
+ mappings:
+   CreditCardTransactionMapping:
+     sources:
+       - [data/input/kaggle/Credit_Fraud/fraudTest.csv~csv]
+-    s: ex:transaction/$(trans_num)
++    s: example:CreditCardTransaction/$(trans_num)
+     po:
+       - [a, ex:CreditCardTransaction]
+       - [ex:amount, $(amt), xsd:decimal]
+-      - [ex:transactionDateTime, $(trans_date_trans_time), xsd:dateTime]
+-      - [ex:unixTime, $(unix_time), xsd:long]
+-      - [ex:isFraud, $(is_fraud), xsd:boolean]
+-      - [ex:usesCard, ex:card/$(cc_num)~iri]
+-      - [ex:atMerchant, ex:merchant/$(merchant)~iri]
+-      - [schema:madeBy, ex:person/$(cc_num)~iri]
++      - [ex:isFraudulent, $(is_fraud), xsd:boolean]
++      - [schema:cardholder, example:Person/$(first)~iri]
++      - [lkg:metadata, example:CreditCardTransaction/$(trans_num)/Metadata~iri]
+ 
+   MerchantMapping:
+     sources:
+       - [data/input/kaggle/Credit_Fraud/fraudTest.csv~csv]
+-    s: ex:merchant/$(merchant)
++    s: example:Merchant/$(merchant)
+     po:
+       - [a, ex:Merchant]
+-      - [eli:has_part, ex:transaction/$(trans_num)~iri]
+-      - [geo1:lat, $(merch_lat), xsd:decimal]
+-      - [geo1:long, $(merch_long), xsd:decimal]
++      - [geo1:lat, $(merch_lat), xsd:string]
++      - [geo1:long, $(merch_long), xsd:string]
++      - [eli:has_part, example:CreditCardTransaction/$(trans_num)~iri]
+ 
+   PersonMapping:
+     sources:
+       - [data/input/kaggle/Credit_Fraud/fraudTest.csv~csv]
+-    s: ex:person/$(cc_num)
++    s: example:Person/$(first)
+     po:
+       - [a, schema:Person]
+-      - [schema:address, ex:address/$(cc_num)~iri]
+-      - [schema:givenName, $(first), xsd:string]
+-      - [schema:lastName, $(last), xsd:string]
+       - [schema:gender, $(gender), xsd:string]
+-      - [schema:streetAddress, $(street), xsd:string]
+-      - [schema:addressLocality, $(city), xsd:string]
+-      - [schema:addressRegion, $(state), xsd:string]
+-      - [schema:postalCode, $(zip), xsd:string]
+-      - [geo1:lat, $(lat), xsd:decimal]
+-      - [geo1:long, $(long), xsd:decimal]
+-      - [schema:population, $(city_pop), xsd:integer]
+-      - [schema:occupation, $(job), xsd:string]
+-      - [schema:birthDate, $(dob), xsd:date]
++      - [schema:jobTitle, $(job), xsd:string]
++      - [schema:birthDate, $(dob), xsd:string]
+ 
+-  PostalAddressMapping:
++  CreditCardTransactionMetadataMapping:
+     sources:
+       - [data/input/kaggle/Credit_Fraud/fraudTest.csv~csv]
+-    s: ex:address/$(cc_num)
+-    po:
+-      - [a, schema:PostalAddress]
+-      - [schema:streetAddress, $(street), xsd:string]
+-      - [schema:addressLocality, $(city), xsd:string]
+-      - [schema:addressRegion, $(state), xsd:string]
+-      - [schema:postalCode, $(zip), xsd:string]
+-
+-  CreditCardMapping:
+-    sources:
+-      - [data/input/kaggle/Credit_Fraud/fraudTest.csv~csv]
+-    s: ex:card/$(cc_num)
+-    po:
+-      - [a, ex:CreditCard]
+-      - [ex:cardNumber, $(cc_num), xsd:long]
+-
+-  MetadataMapping:
+-    sources:
+-      - [data/input/kaggle/Credit_Fraud/fraudTest.csv~csv]
+-    s: ex:transaction/$(trans_num)/Metadata
++    s: example:CreditCardTransaction/$(trans_num)/Metadata
+     po:
+       - [a, ex:CreditCardTransactionMetadata]
++      - [schema:name, $(merchant), xsd:string]
++      - [schema:description, $(category), xsd:string]
++      - [schema:streetAddress, $(street), xsd:string]
++      - [schema:city, $(city), xsd:string]
++      - [schema:state, $(state), xsd:string]
++      - [schema:postalCode, $(zip), xsd:string]
++      - [geo1:lat, $(lat), xsd:string]
++      - [geo1:long, $(long), xsd:string]
++      - [ex:cityPopulation, $(city_pop), xsd:integer]

@@ -1,0 +1,15 @@
+# Competency Questions (user-provided)
+# Generated: 2026-05-26T15:36:12.260486
+# Total: 11
+
+1. Which transactions are flagged as fraudulent?
+2. Which cardholders have made more than 3 fraudulent transactions?
+3. What is the total amount involved in fraudulent transactions per merchant category?
+4. What is the job and date of birth of the cardholder who made a given transaction?
+5. Which cardholders live in a city with a population greater than 100,000?
+6. Which merchants have the highest number of fraud-flagged transactions?
+7. What merchant categories are most associated with fraud?
+8. Which transactions occurred where the cardholder's location and merchant location are more than 50km apart?
+9. Which fraudulent transactions happened in a specific US state (e.g., SC)?
+10. How many transactions occurred within the same hour across all cardholders?
+11. Which cardholder made multiple transactions within a 10-minute window?

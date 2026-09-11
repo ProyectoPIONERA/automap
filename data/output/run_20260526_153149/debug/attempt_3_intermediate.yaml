@@ -1,0 +1,53 @@
+prefixes:
+  rdf: "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+  rdfs: "http://www.w3.org/2000/01/rdf-schema#"
+  xsd: "http://www.w3.org/2001/XMLSchema#"
+  ex: "http://example.org/fraud#"
+  schema: "https://schema.org/"
+  geo1: "http://www.w3.org/2003/01/geo/wgs84_pos#"
+  foaf: "http://xmlns.com/foaf/0.1/"
+
+mappings:
+  CreditCardTransactionMapping:
+    sources:
+      - [data/input/kaggle/Credit_Fraud/fraudTest.csv~csv]
+    s: ex:CreditCardTransaction/$(trans_num)
+    po:
+      - [a, ex:CreditCardTransaction]
+      - [ex:amount, $(amt), xsd:decimal]
+      - [ex:isFraudulent, $(is_fraud), xsd:boolean]
+      - [schema:cardholder, schema:Person/$(first)~iri]
+      - [lkg:metadata, ex:CreditCardTransaction/$(trans_num)/Metadata~iri]
+  MerchantMapping:
+    sources:
+      - [data/input/kaggle/Credit_Fraud/fraudTest.csv~csv]
+    s: ex:Merchant/$(merchant)
+    po:
+      - [a, ex:Merchant]
+      - [geo1:lat, $(merch_lat)~iri]
+      - [geo1:long, $(merch_long)~iri]
+      - [eli:has_part, ex:CreditCardTransaction/$(trans_num)~iri]
+  PersonMapping:
+    sources:
+      - [data/input/kaggle/Credit_Fraud/fraudTest.csv~csv]
+    s: schema:Person/$(first)
+    po:
+      - [a, schema:Person]
+      - [schema:gender, $(gender), xsd:string]
+      - [schema:jobTitle, $(job), xsd:string]
+      - [schema:birthDate, $(dob)~iri]
+  CreditCardTransactionMetadataMapping:
+    sources:
+      - [data/input/kaggle/Credit_Fraud/fraudTest.csv~csv]
+    s: ex:CreditCardTransaction/$(trans_num)/Metadata
+    po:
+      - [a, ex:CreditCardTransactionMetadata]
+      - [schema:name, $(merchant), xsd:string]
+      - [schema:description, $(category), xsd:string]
+      - [schema:streetAddress, $(street), xsd:string]
+      - [schema:city, $(city), xsd:string]
+      - [schema:state, $(state), xsd:string]
+      - [schema:postalCode, $(zip), xsd:string]
+      - [geo1:lat, $(lat)~iri]
+      - [geo1:long, $(long)~iri]
+      - [ex:cityPopulation, $(city_pop), xsd:integer]

@@ -1,0 +1,66 @@
+mappings:
+  CreditCardTransactionMapping:
+    sources:
+      - [data/input/kaggle/Credit_Fraud/fraudTest.csv~csv]
+    s: ex:transaction/$(trans_num)
+    po:
+      - [a, ex:CreditCardTransaction]
+      - [ex:amount, $(amt), xsd:decimal]
+      - [ex:isFraud, $(is_fraud), xsd:boolean]
+      - [ex:unixTime, $(unix_time), xsd:long]
+      - [ex:transactionDateTime, $(trans_date_trans_time), xsd:dateTime]
+      - [ex:cardNumber, $(cc_num)~iri]
+      - [schema:name, $(merchant)~iri]
+      - [schema:givenName, $(first)~iri]
+      - [schema:lastName, $(last)~iri]
+      - [schema:streetAddress, $(street)~iri]
+      - [schema:addressLocality, $(city)~iri]
+      - [schema:addressRegion, $(state)~iri]
+      - [schema:postalCode, $(zip)~iri]
+      - [ex:atMerchant, ex:merchant/$(merchant)~iri]
+      - [ex:heldBy, ex:person/$(first)_$(last)~iri]
+      - [ex:usesCard, ex:creditCard/$(cc_num)~iri]
+      - [lkg:metadata, ex:transaction/$(trans_num)/Metadata~iri]
+  MerchantMapping:
+    sources:
+      - [data/input/kaggle/Credit_Fraud/fraudTest.csv~csv]
+    s: ex:merchant/$(merchant)
+    po:
+      - [a, ex:Merchant]
+      - [schema:name, $(merchant)~iri]
+      - [geo1:lat, $(merch_lat)~iri]
+      - [geo1:long, $(merch_long)~iri]
+      - [eli:has_part, ex:transaction/$(trans_num)~iri]
+  PersonMapping:
+    sources:
+      - [data/input/kaggle/Credit_Fraud/fraudTest.csv~csv]
+    s: ex:person/$(first)_$(last)
+    po:
+      - [a, schema:Person]
+      - [schema:givenName, $(first)~iri]
+      - [schema:lastName, $(last)~iri]
+      - [schema:gender, $(gender)~iri]
+      - [schema:jobTitle, $(job)~iri]
+      - [schema:birthDate, $(dob), xsd:date]
+      - [eli:has_part, ex:transaction/$(trans_num)~iri]
+  PostalAddressMapping:
+    sources:
+      - [data/input/kaggle/Credit_Fraud/fraudTest.csv~csv]
+    s: ex:address/$(street)_$(city)_$(state)_$(zip)
+    po:
+      - [a, schema:PostalAddress]
+      - [schema:streetAddress, $(street)~iri]
+      - [schema:addressLocality, $(city)~iri]
+      - [schema:addressRegion, $(state)~iri]
+      - [schema:postalCode, $(zip)~iri]
+      - [schema:population, $(city_pop), xsd:int]
+      - [eli:has_part, ex:transaction/$(trans_num)~iri]
+  MetadataMapping:
+    sources:
+      - [data/input/kaggle/Credit_Fraud/fraudTest.csv~csv]
+    s: ex:transaction/$(trans_num)/Metadata
+    po:
+      - [a, ex:CreditCardTransactionMetadata]
+      - [ex:merchantCategory, $(category), xsd:string]
+      - [geo1:lat, $(lat)~iri]
+      - [geo1:long, $(long)~iri]

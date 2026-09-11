@@ -1,0 +1,14 @@
+# Competency Questions (auto-generated)
+# Generated: 2026-05-26T15:24:40.127008
+# Total: 10
+
+1. Which credit card transactions exist in the dataset?
+2. What is the amount of a given transaction?
+3. Which merchants are linked to credit card transactions via the "at merchant" relationship?
+4. How many fraudulent transactions are there in the dataset?
+5. What is the category of the merchant for a specific transaction?
+6. Who is the cardholder associated with a given credit card number?
+7. Where (latitude and longitude) did a specific transaction occur?
+8. Which city has the highest population among the cities represented in the dataset?
+9. How many transactions occurred on a specific date?
+10. What is the job of the person who made a transaction?
